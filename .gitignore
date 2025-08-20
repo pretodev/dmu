@@ -3,3 +3,7 @@
 .dart_tool/
 
 resources/pubscpect.example.yaml
+
+
+# Conventional directory for build output.
+build/

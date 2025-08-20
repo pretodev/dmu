@@ -109,4 +109,24 @@ class FileManager {
   String getAbsolutePath(String relativePath) {
     return File('$projectRoot/$relativePath').absolute.path;
   }
+
+  /// Limpa todas as entradas relacionadas a packages do .gitignore
+  void clearPackagesFromGitignore() {
+    final gitignoreFile = File('$projectRoot/.gitignore');
+    
+    if (!gitignoreFile.existsSync()) {
+      return;
+    }
+
+    final content = gitignoreFile.readAsStringSync();
+    final lines = content.split('\n');
+    
+    // Remove todas as linhas que começam com 'packages/'
+    final filteredLines = lines.where((line) => !line.trim().startsWith('packages/')).toList();
+    
+    if (filteredLines.length != lines.length) {
+      gitignoreFile.writeAsStringSync(filteredLines.join('\n'));
+      ConsoleLogger.info('Todas as entradas de packages foram removidas do .gitignore');
+    }
+  }
 }

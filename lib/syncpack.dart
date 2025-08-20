@@ -51,12 +51,18 @@ class Syncpack {
        _fileManager = FileManager(projectRoot: projectRoot);
 
   /// Executa o fluxo principal do Syncpack
-  Future<void> run() async {
+  Future<void> run({bool deepClean = false}) async {
     try {
       if (!await _gitManager.isGitAvailable()) {
         ConsoleLogger.error(
           'Git não está instalado ou não está disponível no PATH',
         );
+      }
+
+      // Se deepClean foi solicitado, limpa tudo primeiro
+      if (deepClean) {
+        await cleanAll();
+        ConsoleLogger.success('Limpeza completa realizada!');
       }
 
       final gitPackages = _pubspecParser.parseGitDependencies();
@@ -65,7 +71,8 @@ class Syncpack {
         return;
       }
 
-      final existingOverrides = _pubspecParser.parseExistingOverrides();
+      // Para deepClean, não considera overrides existentes (menu zerado)
+      final existingOverrides = deepClean ? <String>[] : _pubspecParser.parseExistingOverrides();
 
       final selectedPackages =
           InteractiveMenu(
@@ -179,5 +186,35 @@ class Syncpack {
   bool _shouldUseFvm() {
     final fvmrcFile = File('$projectRoot/.fvmrc');
     return fvmrcFile.existsSync();
+  }
+
+  /// Limpa completamente tudo: remove packages/, dependency_overrides e entradas do .gitignore
+  Future<void> cleanAll() async {
+    ConsoleLogger.info('Iniciando limpeza completa...');
+
+    try {
+      // Remove o diretório packages/ se existir
+      final packagesDirectory = Directory(packagesDir);
+      if (packagesDirectory.existsSync()) {
+        ConsoleLogger.info('Removendo diretório packages/...');
+        await packagesDirectory.delete(recursive: true);
+        ConsoleLogger.success('Diretório packages/ removido');
+      } else {
+        ConsoleLogger.info('Diretório packages/ não existe');
+      }
+
+      // Limpa todos os dependency_overrides do pubspec.yaml
+      ConsoleLogger.info('Limpando dependency_overrides do pubspec.yaml...');
+      _pubspecParser.clearAllDependencyOverrides();
+      ConsoleLogger.success('dependency_overrides limpos');
+
+      // Limpa entradas relacionadas no .gitignore
+      ConsoleLogger.info('Limpando entradas do .gitignore...');
+      _fileManager.clearPackagesFromGitignore();
+      ConsoleLogger.success('Entradas do .gitignore limpas');
+
+    } catch (e) {
+      ConsoleLogger.error('Erro durante a limpeza: $e');
+    }
   }
 }

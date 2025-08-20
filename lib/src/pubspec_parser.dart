@@ -153,4 +153,11 @@ class PubspecParser {
     final file = File(pubspecPath);
     file.writeAsStringSync(_lines.join('\n'));
   }
+
+  /// Limpa completamente todos os dependency_overrides do pubspec.yaml
+  void clearAllDependencyOverrides() {
+    _removeDependencyOverrides();
+    _writePubspec();
+    ConsoleLogger.info('Todos os dependency_overrides foram removidos do pubspec.yaml');
+  }
 }
