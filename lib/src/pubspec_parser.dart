@@ -136,9 +136,9 @@ class PubspecParser {
     final overrideLines = <String>['dependency_overrides:'];
     
     for (final package in packages) {
-      final localPath = package.getLocalPath(packagesDir);
+      final relativePath = package.getRelativePath();
       overrideLines.add('  ${package.name}:');
-      overrideLines.add('    path: $localPath');
+      overrideLines.add('    path: $relativePath');
     }
 
     // Adiciona uma linha em branco antes se necessário

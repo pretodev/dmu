@@ -24,6 +24,12 @@ class GitPackage {
     return path != null ? '$basePath/$path' : basePath;
   }
 
+  /// Obtém o caminho relativo para uso no dependency_overrides
+  String getRelativePath() {
+    final basePath = 'packages/$repositoryName';
+    return path != null ? '$basePath/$path' : basePath;
+  }
+
   /// Converte URL HTTPS para SSH (específico para Azure DevOps)
   String get sshUrl {
     return url

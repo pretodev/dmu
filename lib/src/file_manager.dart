@@ -38,7 +38,7 @@ class FileManager {
   }
 
   void _addToGitignore(File gitignoreFile, GitPackage package, String packagesDir) {
-    final repoPath = '$packagesDir/${package.repositoryName}';
+    final repoPath = 'packages/${package.repositoryName}';
     
     if (!gitignoreFile.existsSync()) {
       gitignoreFile.createSync();
@@ -68,7 +68,7 @@ class FileManager {
       return;
     }
 
-    final repoPath = '$packagesDir/${package.repositoryName}';
+    final repoPath = 'packages/${package.repositoryName}';
     final content = gitignoreFile.readAsStringSync();
     final lines = content.split('\n');
     
