@@ -27,6 +27,11 @@ class ConsoleLogger {
     exit(1);
   }
 
+  /// Imprime uma mensagem de aviso
+  static void warning(String message) {
+    print('$_yellow$_bold==> AVISO:$_reset$_yellow $message$_reset');
+  }
+
   /// Imprime texto com cor específica
   static void colored(String message, ConsoleColor color) {
     final colorCode = _getColorCode(color);

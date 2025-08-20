@@ -5,6 +5,7 @@ import 'package:process/process.dart';
 import 'src/console_logger.dart';
 import 'src/file_manager.dart';
 import 'src/git_manager.dart';
+import 'src/git_package.dart';
 import 'src/interactive_menu.dart';
 import 'src/pubspec_parser.dart';
 
@@ -87,7 +88,7 @@ class Syncpack {
 
       _pubspecParser.updateDependencyOverrides(selectedPackages, packagesDir);
 
-      await _runFlutterCommands();
+      await _runFlutterCommands(selectedPackages);
       ConsoleLogger.success('Sincronização concluída!');
     } catch (e) {
       ConsoleLogger.error('Erro durante a execução: $e');
@@ -95,12 +96,57 @@ class Syncpack {
   }
 
   /// Executa comandos Flutter clean e pub get
-  Future<void> _runFlutterCommands() async {
+  Future<void> _runFlutterCommands(List<GitPackage> selectedPackages) async {
     final processManager = const LocalProcessManager();
     final useFvm = _shouldUseFvm();
     final flutterCommand = useFvm ? 'fvm' : 'flutter';
 
     try {
+      // Primeiro executa clean e pub get em cada pacote selecionado
+      for (final package in selectedPackages) {
+        final packageName = package.repositoryName;
+        final packagePath = '$packagesDir/$packageName';
+        final packageDir = Directory(packagePath);
+        
+        if (!packageDir.existsSync()) {
+          ConsoleLogger.warning('Diretório do pacote $packageName não encontrado: $packagePath');
+          continue;
+        }
+
+        ConsoleLogger.info('Executando comandos Flutter no pacote: $packageName');
+        
+        // Flutter clean no pacote
+        ConsoleLogger.info('  Executando ${useFvm ? 'fvm flutter' : 'flutter'} clean em $packageName...');
+        final cleanArgs = useFvm ? ['flutter', 'clean'] : ['clean'];
+        final cleanResult = await processManager.run([
+          flutterCommand,
+          ...cleanArgs,
+        ], workingDirectory: packagePath);
+
+        if (cleanResult.exitCode != 0) {
+          ConsoleLogger.warning('  Falha ao executar ${useFvm ? 'fvm flutter' : 'flutter'} clean em $packageName');
+          continue;
+        }
+
+        // Flutter pub get no pacote
+        ConsoleLogger.info('  Executando ${useFvm ? 'fvm flutter' : 'flutter'} pub get em $packageName...');
+        final pubGetArgs = useFvm ? ['flutter', 'pub', 'get'] : ['pub', 'get'];
+        final pubGetResult = await processManager.run([
+          flutterCommand,
+          ...pubGetArgs,
+        ], workingDirectory: packagePath);
+
+        if (pubGetResult.exitCode != 0) {
+          ConsoleLogger.warning('  Falha ao executar ${useFvm ? 'fvm flutter' : 'flutter'} pub get em $packageName');
+          continue;
+        }
+
+        ConsoleLogger.success('  Comandos Flutter executados com sucesso em $packageName');
+      }
+
+      // Depois executa clean e pub get no projeto raiz
+      ConsoleLogger.info('Executando comandos Flutter no projeto raiz...');
+      
       ConsoleLogger.info('Executando ${useFvm ? 'fvm flutter' : 'flutter'} clean...');
       final cleanArgs = useFvm ? ['flutter', 'clean'] : ['clean'];
       final cleanResult = await processManager.run([
@@ -109,7 +155,7 @@ class Syncpack {
       ], workingDirectory: projectRoot);
 
       if (cleanResult.exitCode != 0) {
-        ConsoleLogger.error('Falha ao executar ${useFvm ? 'fvm flutter' : 'flutter'} clean');
+        ConsoleLogger.error('Falha ao executar ${useFvm ? 'fvm flutter' : 'flutter'} clean no projeto raiz');
       }
 
       ConsoleLogger.info('Executando ${useFvm ? 'fvm flutter' : 'flutter'} pub get...');
@@ -120,10 +166,10 @@ class Syncpack {
       ], workingDirectory: projectRoot);
 
       if (pubGetResult.exitCode != 0) {
-        ConsoleLogger.error('Falha ao executar ${useFvm ? 'fvm flutter' : 'flutter'} pub get');
+        ConsoleLogger.error('Falha ao executar ${useFvm ? 'fvm flutter' : 'flutter'} pub get no projeto raiz');
       }
 
-      ConsoleLogger.success('Comandos Flutter executados com sucesso');
+      ConsoleLogger.success('Todos os comandos Flutter executados com sucesso');
     } catch (e) {
       ConsoleLogger.error('Erro ao executar comandos Flutter: $e');
     }
