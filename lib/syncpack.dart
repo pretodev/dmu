@@ -97,32 +97,41 @@ class Syncpack {
   /// Executa comandos Flutter clean e pub get
   Future<void> _runFlutterCommands() async {
     final processManager = const LocalProcessManager();
+    final useFvm = _shouldUseFvm();
+    final flutterCommand = useFvm ? 'fvm' : 'flutter';
 
     try {
-      ConsoleLogger.info('Executando flutter clean...');
+      ConsoleLogger.info('Executando ${useFvm ? 'fvm flutter' : 'flutter'} clean...');
+      final cleanArgs = useFvm ? ['flutter', 'clean'] : ['clean'];
       final cleanResult = await processManager.run([
-        'flutter',
-        'clean',
+        flutterCommand,
+        ...cleanArgs,
       ], workingDirectory: projectRoot);
 
       if (cleanResult.exitCode != 0) {
-        ConsoleLogger.error('Falha ao executar flutter clean');
+        ConsoleLogger.error('Falha ao executar ${useFvm ? 'fvm flutter' : 'flutter'} clean');
       }
 
-      ConsoleLogger.info('Executando flutter pub get...');
+      ConsoleLogger.info('Executando ${useFvm ? 'fvm flutter' : 'flutter'} pub get...');
+      final pubGetArgs = useFvm ? ['flutter', 'pub', 'get'] : ['pub', 'get'];
       final pubGetResult = await processManager.run([
-        'flutter',
-        'pub',
-        'get',
+        flutterCommand,
+        ...pubGetArgs,
       ], workingDirectory: projectRoot);
 
       if (pubGetResult.exitCode != 0) {
-        ConsoleLogger.error('Falha ao executar flutter pub get');
+        ConsoleLogger.error('Falha ao executar ${useFvm ? 'fvm flutter' : 'flutter'} pub get');
       }
 
       ConsoleLogger.success('Comandos Flutter executados com sucesso');
     } catch (e) {
       ConsoleLogger.error('Erro ao executar comandos Flutter: $e');
     }
+  }
+
+  /// Verifica se deve usar fvm baseado na existência do arquivo .fvmrc
+  bool _shouldUseFvm() {
+    final fvmrcFile = File('$projectRoot/.fvmrc');
+    return fvmrcFile.existsSync();
   }
 }
