@@ -7,7 +7,6 @@ import 'src/git/git_manager.dart';
 import 'src/git/git_package.dart';
 import 'src/io/file_manager.dart';
 import 'src/io/pubspec_parser.dart';
-import 'src/package_usage_checker.dart';
 
 class Syncpack {
   final String projectRoot;
@@ -15,7 +14,6 @@ class Syncpack {
   final PubspecParser _pubspecParser;
   final GitManager _gitManager;
   final FileManager _fileManager;
-  final PackageUsageChecker _usageChecker;
 
   Syncpack._(
     this.projectRoot,
@@ -23,7 +21,6 @@ class Syncpack {
     this._pubspecParser,
     this._gitManager,
     this._fileManager,
-    this._usageChecker,
   );
 
   factory Syncpack.forDirectory(
@@ -39,7 +36,6 @@ class Syncpack {
       PubspecParser(pubspecPath: pubspecPath),
       GitManager(packagesDir: packagesDir),
       FileManager(projectRoot: projectRoot),
-      PackageUsageChecker(projectRoot: projectRoot),
     );
   }
 
@@ -76,7 +72,7 @@ class Syncpack {
 
       _pubspecParser.addSingleDependencyOverride(package, packagesDir);
 
-      await _runFlutterCommands([package], customPackagesDir: packagesDir);
+      await _runFlutterCommands([package]);
 
       _fileManager.addPackageToGitignore(packagesDir);
 
@@ -89,6 +85,14 @@ class Syncpack {
   /// Remove um pacote do dependency_override e pasta local
   Future<void> remove(String packageName) async {
     try {
+      final existingOverrides = _pubspecParser.parseExistingOverrides();
+      if (!existingOverrides.contains(packageName)) {
+        ConsoleLogger.warning(
+          'Pacote "$packageName" não está no dependency_overrides',
+        );
+        return;
+      }
+
       final gitPackages = _pubspecParser.parseGitDependencies();
       final package = gitPackages
           .where((p) => p.name == packageName)
@@ -100,26 +104,9 @@ class Syncpack {
         );
       }
 
-      final existingOverrides = _pubspecParser.parseExistingOverrides();
-      if (!existingOverrides.contains(packageName)) {
-        ConsoleLogger.warning(
-          'Pacote "$packageName" não está no dependency_overrides',
-        );
-      }
-
-      // Verifica se o pacote está sendo usado (busca por imports)
-      if (_usageChecker.isPackageInUse(packageName)) {
-        ConsoleLogger.error(
-          'Pacote "$packageName" está sendo usado no projeto. Remova as referências antes de continuar.',
-        );
-      }
-
       ConsoleLogger.info('Removendo pacote: $packageName');
-
-      // Remove do dependency_overrides
       _pubspecParser.removeSingleDependencyOverride(packageName);
 
-      // Remove pasta do clone
       final packagePath = '$packagesDir/${package.repositoryName}';
       final packageDir = Directory(packagePath);
       if (packageDir.existsSync()) {
@@ -127,14 +114,7 @@ class Syncpack {
         ConsoleLogger.info('Pasta do pacote removida: $packagePath');
       }
 
-      // // Atualiza .gitignore
-      // _fileManager.removePackageFromGitignore(
-      //   packageName,
-      //   package.repositoryName,
-      // );
-
-      // Executa flutter clean e pub get no projeto
-      await _runFlutterCommandsInProject();
+      await _runFlutterCommands();
 
       ConsoleLogger.success('Pacote "$packageName" removido com sucesso!');
     } catch (e) {
@@ -208,18 +188,17 @@ class Syncpack {
   }
 
   /// Executa comandos Flutter clean e pub get
-  Future<void> _runFlutterCommands(
-    List<GitPackage> selectedPackages, {
-    String? customPackagesDir,
-  }) async {
+  Future<void> _runFlutterCommands([
+    List<GitPackage> packages = const [],
+  ]) async {
     final processManager = const LocalProcessManager();
     final useFvm = _shouldUseFvm();
     final flutterCommand = useFvm ? 'fvm' : 'flutter';
 
     try {
-      for (final package in selectedPackages) {
+      for (final package in packages) {
         final packageName = package.repositoryName;
-        final packagePath = '${customPackagesDir ?? packagesDir}/$packageName';
+        final packagePath = '$packagesDir/$packageName';
         final packageDir = Directory(packagePath);
 
         if (!packageDir.existsSync()) {
@@ -286,8 +265,6 @@ class Syncpack {
         ConsoleLogger.warning(
           'Falha: ${useFvm ? 'fvm flutter' : 'flutter'} pub get\n${pubGetResult.stderr}',
         );
-      } else {
-        ConsoleLogger.success('Projeto configurado com sucesso');
       }
     } catch (e) {
       ConsoleLogger.error('Erro ao executar comandos Flutter: $e');
@@ -326,53 +303,6 @@ class Syncpack {
       ConsoleLogger.success('Entradas do .gitignore limpas');
     } catch (e) {
       ConsoleLogger.error('Erro durante a limpeza: $e');
-    }
-  }
-
-  /// Executa flutter clean e pub get apenas no projeto raiz
-  Future<void> _runFlutterCommandsInProject() async {
-    final processManager = const LocalProcessManager();
-    final useFvm = _shouldUseFvm();
-    final flutterCommand = useFvm ? 'fvm' : 'flutter';
-
-    try {
-      ConsoleLogger.info('Executando comandos Flutter no projeto raiz...');
-
-      ConsoleLogger.info(
-        'Executando ${useFvm ? 'fvm flutter' : 'flutter'} clean...',
-      );
-      final cleanArgs = useFvm ? ['flutter', 'clean'] : ['clean'];
-      final cleanResult = await processManager.run([
-        flutterCommand,
-        ...cleanArgs,
-      ], workingDirectory: projectRoot);
-
-      if (cleanResult.exitCode != 0) {
-        ConsoleLogger.error(
-          'Falha ao executar ${useFvm ? 'fvm flutter' : 'flutter'} clean no projeto raiz',
-        );
-      }
-
-      ConsoleLogger.info(
-        'Executando ${useFvm ? 'fvm flutter' : 'flutter'} pub get...',
-      );
-      final pubGetArgs = useFvm ? ['flutter', 'pub', 'get'] : ['pub', 'get'];
-      final pubGetResult = await processManager.run([
-        flutterCommand,
-        ...pubGetArgs,
-      ], workingDirectory: projectRoot);
-
-      if (pubGetResult.exitCode != 0) {
-        ConsoleLogger.error(
-          'Falha ao executar ${useFvm ? 'fvm flutter' : 'flutter'} pub get no projeto raiz',
-        );
-      }
-
-      ConsoleLogger.success(
-        'Comandos Flutter executados com sucesso no projeto raiz',
-      );
-    } catch (e) {
-      ConsoleLogger.error('Erro ao executar comandos Flutter no projeto: $e');
     }
   }
 }
