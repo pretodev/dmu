@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:yaml/yaml.dart';
 
-import 'console_logger.dart';
+import 'console/console_logger.dart';
 
 /// Classe responsável por verificar se um pacote está sendo usado no projeto
 class PackageUsageChecker {

@@ -1,21 +1,45 @@
 import 'dart:io';
 
-import 'console_logger.dart';
+import 'package:syncpack/src/console/console_confirm.dart';
 
-/// Gerencia operações de arquivo (.gitignore)
+import '../console/console_logger.dart';
+
+/// Gestor da pasta onde os repositorios serão clonados
 class FileManager {
   final String projectRoot;
 
-  FileManager({required this.projectRoot});
+  FileManager({
+    required this.projectRoot,
+  });
 
-  /// Adiciona um pacote ao .gitignore
-  void addPackageToGitignore(
-    String packageName,
-    String repositoryName, {
-    String? customPath,
-  }) {
+  bool _checkPathInGitignore(File gitignoreFile, path) {
+    if (!gitignoreFile.existsSync()) {
+      return false;
+    }
+    final content = gitignoreFile.readAsStringSync();
+    final lines = content.split('\n');
+
+    if (lines.any((line) => line.trim() == path)) {
+      return true;
+    }
+    return false;
+  }
+
+  /// Adiciona um caminho ao .gitignore
+  void addPackageToGitignore(String path) {
     final gitignoreFile = File('$projectRoot/.gitignore');
-    final repoPath = customPath ?? 'package/$repositoryName';
+
+    final ignorePath = '${path.replaceAll('$projectRoot/', '')}/';
+
+    if (_checkPathInGitignore(gitignoreFile, ignorePath)) {
+      return;
+    }
+
+    if (!ConsoleConfirm.ask(
+      "Gostaria de adicionar $ignorePath ao .gitignore?",
+    )) {
+      return;
+    }
 
     if (!gitignoreFile.existsSync()) {
       gitignoreFile.createSync();
@@ -24,7 +48,7 @@ class FileManager {
     final content = gitignoreFile.readAsStringSync();
     final lines = content.split('\n');
 
-    if (lines.any((line) => line.trim() == repoPath)) {
+    if (lines.any((line) => line.trim() == ignorePath)) {
       return;
     }
 
@@ -32,37 +56,10 @@ class FileManager {
       lines.add('');
     }
 
-    lines.add(repoPath);
+    lines.add(ignorePath);
     gitignoreFile.writeAsStringSync(lines.join('\n'));
 
-    ConsoleLogger.info('Adicionado $repoPath ao .gitignore');
-  }
-
-  /// Remove um pacote do .gitignore
-  void removePackageFromGitignore(
-    String packageName,
-    String repositoryName, {
-    String? customPath,
-  }) {
-    final gitignoreFile = File('$projectRoot/.gitignore');
-
-    if (!gitignoreFile.existsSync()) {
-      return;
-    }
-
-    final repoPath = customPath ?? 'package/$repositoryName';
-    final content = gitignoreFile.readAsStringSync();
-    final lines = content.split('\n');
-
-    // Remove a linha correspondente
-    final filteredLines = lines
-        .where((line) => line.trim() != repoPath)
-        .toList();
-
-    if (filteredLines.length != lines.length) {
-      gitignoreFile.writeAsStringSync(filteredLines.join('\n'));
-      ConsoleLogger.info('Removido $repoPath do .gitignore');
-    }
+    ConsoleLogger.info('Adicionado $path ao .gitignore');
   }
 
   /// Verifica se um arquivo existe

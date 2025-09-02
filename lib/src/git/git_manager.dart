@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:process/process.dart';
 
-import 'console_logger.dart';
+import '../console/console_logger.dart';
 import 'git_package.dart';
 
 /// Gerencia operações Git (clone, remoção)
@@ -48,7 +48,7 @@ class GitManager {
       return true;
     }
 
-    ConsoleLogger.error('Falha ao clonar ${package.repositoryName}');
+    return false;
   }
 
   /// Remove um repositório clonado

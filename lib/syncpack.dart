@@ -2,12 +2,12 @@ import 'dart:io';
 
 import 'package:process/process.dart';
 
-import 'src/console_logger.dart';
-import 'src/file_manager.dart';
-import 'src/git_manager.dart';
-import 'src/git_package.dart';
+import 'src/console/console_logger.dart';
+import 'src/git/git_manager.dart';
+import 'src/git/git_package.dart';
+import 'src/io/file_manager.dart';
+import 'src/io/pubspec_parser.dart';
 import 'src/package_usage_checker.dart';
-import 'src/pubspec_parser.dart';
 
 class Syncpack {
   final String projectRoot;
@@ -49,7 +49,7 @@ class Syncpack {
   }
 
   /// Adiciona um pacote ao dependency_override e clona localmente
-  Future<void> add(String packageName, {String clonePath = 'packages'}) async {
+  Future<void> add(String packageName) async {
     try {
       if (!await _gitManager.isGitAvailable()) {
         ConsoleLogger.error(
@@ -68,27 +68,17 @@ class Syncpack {
         );
       }
 
-      final targetDir = clonePath == 'packages'
-          ? packagesDir
-          : '$projectRoot/$clonePath';
-
       ConsoleLogger.info('Adicionando pacote: $packageName');
-      await _gitManager.cloneRepository(package);
-      _pubspecParser.addSingleDependencyOverride(package, targetDir);
+      final cloned = await _gitManager.cloneRepository(package);
+      if (!cloned) {
+        ConsoleLogger.error('Erro ao clonar pacote: $packageName');
+      }
 
-      // TODO: Gostaria de adicionar .gitignore
-      // Atualiza .gitignore
-      // final customPath = clonePath == 'package'
-      //     ? null
-      //     : '$clonePath/${package.repositoryName}';
-      // _fileManager.addPackageToGitignore(
-      //   packageName,
-      //   package.repositoryName,
-      //   customPath: customPath,
-      // );
+      _pubspecParser.addSingleDependencyOverride(package, packagesDir);
 
-      // Executa flutter clean e pub get no pacote e projeto
-      await _runFlutterCommands([package], customPackagesDir: targetDir);
+      await _runFlutterCommands([package], customPackagesDir: packagesDir);
+
+      _fileManager.addPackageToGitignore(packagesDir);
 
       ConsoleLogger.success('Pacote "$packageName" adicionado com sucesso!');
     } catch (e) {
@@ -137,11 +127,11 @@ class Syncpack {
         ConsoleLogger.info('Pasta do pacote removida: $packagePath');
       }
 
-      // Atualiza .gitignore
-      _fileManager.removePackageFromGitignore(
-        packageName,
-        package.repositoryName,
-      );
+      // // Atualiza .gitignore
+      // _fileManager.removePackageFromGitignore(
+      //   packageName,
+      //   package.repositoryName,
+      // );
 
       // Executa flutter clean e pub get no projeto
       await _runFlutterCommandsInProject();
@@ -227,7 +217,6 @@ class Syncpack {
     final flutterCommand = useFvm ? 'fvm' : 'flutter';
 
     try {
-      // Primeiro executa clean e pub get em cada pacote selecionado
       for (final package in selectedPackages) {
         final packageName = package.repositoryName;
         final packagePath = '${customPackagesDir ?? packagesDir}/$packageName';
@@ -240,14 +229,9 @@ class Syncpack {
           continue;
         }
 
-        ConsoleLogger.info(
-          'Executando comandos Flutter no pacote: $packageName',
-        );
+        ConsoleLogger.info('Configurando pacote: $packageName');
 
-        // Flutter clean no pacote
-        ConsoleLogger.info(
-          '  Executando ${useFvm ? 'fvm flutter' : 'flutter'} clean em $packageName...',
-        );
+        ConsoleLogger.info(' ${useFvm ? 'fvm flutter' : 'flutter'} clean');
         final cleanArgs = useFvm ? ['flutter', 'clean'] : ['clean'];
         final cleanResult = await processManager.run([
           flutterCommand,
@@ -256,15 +240,12 @@ class Syncpack {
 
         if (cleanResult.exitCode != 0) {
           ConsoleLogger.warning(
-            '  Falha ao executar ${useFvm ? 'fvm flutter' : 'flutter'} clean em $packageName',
+            'Falha: ${useFvm ? 'fvm flutter' : 'flutter'} clean\n${cleanResult.stderr}',
           );
           continue;
         }
 
-        // Flutter pub get no pacote
-        ConsoleLogger.info(
-          '  Executando ${useFvm ? 'fvm flutter' : 'flutter'} pub get em $packageName...',
-        );
+        ConsoleLogger.info(' ${useFvm ? 'fvm flutter' : 'flutter'} pub get');
         final pubGetArgs = useFvm ? ['flutter', 'pub', 'get'] : ['pub', 'get'];
         final pubGetResult = await processManager.run([
           flutterCommand,
@@ -273,22 +254,15 @@ class Syncpack {
 
         if (pubGetResult.exitCode != 0) {
           ConsoleLogger.warning(
-            '  Falha ao executar ${useFvm ? 'fvm flutter' : 'flutter'} pub get em $packageName',
+            'Falha: ${useFvm ? 'fvm flutter' : 'flutter'} pub get\n${pubGetResult.stderr}',
           );
           continue;
         }
-
-        ConsoleLogger.success(
-          '  Comandos Flutter executados com sucesso em $packageName',
-        );
       }
 
-      // Depois executa clean e pub get no projeto raiz
-      ConsoleLogger.info('Executando comandos Flutter no projeto raiz...');
+      ConsoleLogger.info('Configurando projeto raiz');
 
-      ConsoleLogger.info(
-        'Executando ${useFvm ? 'fvm flutter' : 'flutter'} clean...',
-      );
+      ConsoleLogger.info('  ${useFvm ? 'fvm flutter' : 'flutter'} clean');
       final cleanArgs = useFvm ? ['flutter', 'clean'] : ['clean'];
       final cleanResult = await processManager.run([
         flutterCommand,
@@ -296,14 +270,12 @@ class Syncpack {
       ], workingDirectory: projectRoot);
 
       if (cleanResult.exitCode != 0) {
-        ConsoleLogger.error(
-          'Falha ao executar ${useFvm ? 'fvm flutter' : 'flutter'} clean no projeto raiz',
+        ConsoleLogger.warning(
+          'Falha: ${useFvm ? 'fvm flutter' : 'flutter'} clean\n${cleanResult.stderr}',
         );
       }
 
-      ConsoleLogger.info(
-        'Executando ${useFvm ? 'fvm flutter' : 'flutter'} pub get...',
-      );
+      ConsoleLogger.info('  ${useFvm ? 'fvm flutter' : 'flutter'} pub get');
       final pubGetArgs = useFvm ? ['flutter', 'pub', 'get'] : ['pub', 'get'];
       final pubGetResult = await processManager.run([
         flutterCommand,
@@ -311,12 +283,12 @@ class Syncpack {
       ], workingDirectory: projectRoot);
 
       if (pubGetResult.exitCode != 0) {
-        ConsoleLogger.error(
-          'Falha ao executar ${useFvm ? 'fvm flutter' : 'flutter'} pub get no projeto raiz',
+        ConsoleLogger.warning(
+          'Falha: ${useFvm ? 'fvm flutter' : 'flutter'} pub get\n${pubGetResult.stderr}',
         );
+      } else {
+        ConsoleLogger.success('Projeto configurado com sucesso');
       }
-
-      ConsoleLogger.success('Todos os comandos Flutter executados com sucesso');
     } catch (e) {
       ConsoleLogger.error('Erro ao executar comandos Flutter: $e');
     }

@@ -1,7 +1,7 @@
 #!/usr/bin/env dart
 
 import 'package:args/args.dart';
-import 'package:syncpack/src/console_logger.dart';
+import 'package:syncpack/src/console/console_logger.dart';
 import 'package:syncpack/syncpack.dart';
 
 /// Entry point do Syncpack
@@ -10,17 +10,16 @@ import 'package:syncpack/syncpack.dart';
 /// Permite clonar repositórios localmente e configurar dependency_overrides
 /// automaticamente no pubspec.yaml.
 void main(List<String> arguments) async {
-  final parser =
-      ArgParser()
-        ..addCommand('add')
-        ..addCommand('remove')
-        ..addCommand('update')
-        ..addFlag(
-          'help',
-          abbr: 'h',
-          help: 'Mostra esta mensagem de ajuda',
-          negatable: false,
-        );
+  final parser = ArgParser()
+    ..addCommand('add')
+    ..addCommand('remove')
+    ..addCommand('update')
+    ..addFlag(
+      'help',
+      abbr: 'h',
+      help: 'Mostra esta mensagem de ajuda',
+      negatable: false,
+    );
 
   // Configurar subcomando 'add'
   parser.commands['add']!
@@ -72,9 +71,7 @@ void main(List<String> arguments) async {
             'Nome do pacote é obrigatório para o comando add.',
           );
         }
-        final packageName = command.rest.first;
-        final clonePath = command['path'] as String;
-        await syncpack.add(packageName, clonePath: clonePath);
+        await syncpack.add(command.rest.first);
         break;
 
       case 'remove':

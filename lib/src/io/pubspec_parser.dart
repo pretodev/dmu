@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:yaml/yaml.dart';
 
-import 'console_logger.dart';
-import 'git_package.dart';
+import '../console/console_logger.dart';
+import '../git/git_package.dart';
 
 /// Parser para análise e manipulação do pubspec.yaml
 class PubspecParser {
@@ -190,11 +190,8 @@ class PubspecParser {
       return;
     }
 
-    // Encontra onde inserir o novo override
     int? insertIndex = _findDependencyOverridesInsertIndex();
-
     if (insertIndex == null) {
-      // Não existe bloco dependency_overrides, cria um novo
       if (_lines.isNotEmpty && _lines.last.trim().isNotEmpty) {
         _lines.add('');
       }
