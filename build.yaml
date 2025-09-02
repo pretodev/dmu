@@ -1,0 +1,16 @@
+# Build configuration for syncpack
+targets:
+  $default:
+    builders:
+      build_runner|build:
+        options:
+          output_directory: build/
+      dart2native|dart2native:
+        options:
+          output_directory: build/
+
+# Global build options
+global_options:
+  build_runner:
+    options:
+      output_directory: build/

@@ -4,6 +4,8 @@
 
 resources/pubscpect.example.yaml
 
-
 # Conventional directory for build output.
 build/
+
+# FVM Version Cache
+.fvm/

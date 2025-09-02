@@ -43,12 +43,17 @@ class GitPackage {
     return name
         .replaceAll('_', ' ')
         .split(' ')
-        .map((word) => word.isEmpty ? '' : '${word[0].toUpperCase()}${word.substring(1)}')
+        .map(
+          (word) => word.isEmpty
+              ? ''
+              : '${word[0].toUpperCase()}${word.substring(1)}',
+        )
         .join(' ');
   }
 
   @override
-  String toString() => 'GitPackage(name: $name, url: $url, ref: $ref, path: $path)';
+  String toString() =>
+      'GitPackage(name: $name, url: $url, ref: $ref, path: $path)';
 
   @override
   bool operator ==(Object other) {

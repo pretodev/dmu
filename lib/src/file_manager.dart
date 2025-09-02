@@ -1,80 +1,64 @@
 import 'dart:io';
-import 'git_package.dart';
+
 import 'console_logger.dart';
 
 /// Gerencia operações de arquivo (.gitignore)
 class FileManager {
   final String projectRoot;
-  
+
   FileManager({required this.projectRoot});
 
-  /// Atualiza o .gitignore com base nos pacotes selecionados
-  void updateGitignore({
-    required List<GitPackage> allPackages,
-    required List<GitPackage> selectedPackages,
-    required List<String> existingOverrides,
-    required String packagesDir,
+  /// Adiciona um pacote ao .gitignore
+  void addPackageToGitignore(
+    String packageName,
+    String repositoryName, {
+    String? customPath,
   }) {
     final gitignoreFile = File('$projectRoot/.gitignore');
-    final selectedNames = selectedPackages.map((p) => p.name).toSet();
-    
-    // Remove entradas de pacotes desmarcados
-    for (final packageName in existingOverrides) {
-      if (!selectedNames.contains(packageName)) {
-        final package = allPackages.firstWhere(
-          (p) => p.name == packageName,
-          orElse: () => throw StateError('Pacote $packageName não encontrado'),
-        );
-        _removeFromGitignore(gitignoreFile, package, packagesDir);
-      }
-    }
+    final repoPath = customPath ?? 'package/$repositoryName';
 
-    // Adiciona entradas de novos pacotes selecionados
-    for (final package in selectedPackages) {
-      if (!existingOverrides.contains(package.name)) {
-        _addToGitignore(gitignoreFile, package, packagesDir);
-      }
-    }
-  }
-
-  void _addToGitignore(File gitignoreFile, GitPackage package, String packagesDir) {
-    final repoPath = 'packages/${package.repositoryName}';
-    
     if (!gitignoreFile.existsSync()) {
       gitignoreFile.createSync();
     }
 
     final content = gitignoreFile.readAsStringSync();
     final lines = content.split('\n');
-    
-    // Verifica se a entrada já existe
+
     if (lines.any((line) => line.trim() == repoPath)) {
-      return; // Já existe
+      return;
     }
 
-    // Adiciona a entrada
     if (content.isNotEmpty && !content.endsWith('\n')) {
       lines.add('');
     }
-    
+
     lines.add(repoPath);
     gitignoreFile.writeAsStringSync(lines.join('\n'));
-    
+
     ConsoleLogger.info('Adicionado $repoPath ao .gitignore');
   }
 
-  void _removeFromGitignore(File gitignoreFile, GitPackage package, String packagesDir) {
+  /// Remove um pacote do .gitignore
+  void removePackageFromGitignore(
+    String packageName,
+    String repositoryName, {
+    String? customPath,
+  }) {
+    final gitignoreFile = File('$projectRoot/.gitignore');
+
     if (!gitignoreFile.existsSync()) {
       return;
     }
 
-    final repoPath = 'packages/${package.repositoryName}';
+    final repoPath = customPath ?? 'package/$repositoryName';
     final content = gitignoreFile.readAsStringSync();
     final lines = content.split('\n');
-    
+
     // Remove a linha correspondente
-    final filteredLines = lines.where((line) => line.trim() != repoPath).toList();
-    
+    final filteredLines = lines
+        .where((line) => line.trim() != repoPath)
+        .toList();
+
     if (filteredLines.length != lines.length) {
       gitignoreFile.writeAsStringSync(filteredLines.join('\n'));
       ConsoleLogger.info('Removido $repoPath do .gitignore');
@@ -110,23 +94,27 @@ class FileManager {
     return File('$projectRoot/$relativePath').absolute.path;
   }
 
-  /// Limpa todas as entradas relacionadas a packages do .gitignore
+  /// Limpa todas as entradas relacionadas a package do .gitignore
   void clearPackagesFromGitignore() {
     final gitignoreFile = File('$projectRoot/.gitignore');
-    
+
     if (!gitignoreFile.existsSync()) {
       return;
     }
 
     final content = gitignoreFile.readAsStringSync();
     final lines = content.split('\n');
-    
-    // Remove todas as linhas que começam com 'packages/'
-    final filteredLines = lines.where((line) => !line.trim().startsWith('packages/')).toList();
-    
+
+    // Remove todas as linhas que começam com 'package/'
+    final filteredLines = lines
+        .where((line) => !line.trim().startsWith('package/'))
+        .toList();
+
     if (filteredLines.length != lines.length) {
       gitignoreFile.writeAsStringSync(filteredLines.join('\n'));
-      ConsoleLogger.info('Todas as entradas de packages foram removidas do .gitignore');
+      ConsoleLogger.info(
+        'Todas as entradas de package foram removidas do .gitignore',
+      );
     }
   }
 }

@@ -10,8 +10,10 @@ class GitManager {
   final ProcessManager _processManager;
   final String packagesDir;
 
-  GitManager({required this.packagesDir, ProcessManager? processManager})
-    : _processManager = processManager ?? const LocalProcessManager();
+  GitManager({
+    required this.packagesDir,
+    ProcessManager? processManager,
+  }) : _processManager = processManager ?? const LocalProcessManager();
 
   /// Clona um repositório Git
   Future<bool> cloneRepository(GitPackage package) async {
@@ -67,29 +69,102 @@ class GitManager {
     }
   }
 
-  /// Processa a seleção de pacotes (clona novos, remove desmarcados)
-  Future<void> processSelection({
-    required List<GitPackage> allPackages,
-    required List<GitPackage> selectedPackages,
-    required List<String> existingOverrides,
-  }) async {
-    final selectedNames = selectedPackages.map((p) => p.name).toSet();
+  /// Atualiza um repositório clonado (git pull)
+  Future<bool> updateRepository(GitPackage package) async {
+    final repoDir = Directory('$packagesDir/${package.repositoryName}');
 
-    for (final packageName in existingOverrides) {
-      if (!selectedNames.contains(packageName)) {
-        final package = allPackages.firstWhere(
-          (p) => p.name == packageName,
-          orElse: () => throw StateError('Pacote $packageName não encontrado'),
-        );
-        await removeRepository(package);
-      }
+    if (!repoDir.existsSync()) {
+      ConsoleLogger.error('Repositório ${package.repositoryName} não existe');
     }
 
-    // Clona novos repositórios selecionados
-    for (final package in selectedPackages) {
-      if (!existingOverrides.contains(package.name)) {
-        await cloneRepository(package);
+    try {
+      ConsoleLogger.info('Atualizando ${package.repositoryName}...');
+
+      // Executa git pull no diretório do repositório
+      final result = await _processManager.run([
+        'git',
+        'pull',
+      ], workingDirectory: repoDir.path);
+
+      if (result.exitCode == 0) {
+        ConsoleLogger.success('${package.repositoryName} atualizado');
+        return true;
       }
+      ConsoleLogger.error('Falha ao atualizar ${package.repositoryName}');
+    } catch (e) {
+      ConsoleLogger.error('Erro ao atualizar ${package.repositoryName}: $e');
+    }
+  }
+
+  /// Clona um repositório em um caminho customizado
+  Future<bool> cloneRepositoryToPath(
+    GitPackage package,
+    String customPath,
+  ) async {
+    final repoDir = Directory('$customPath/${package.repositoryName}');
+
+    if (repoDir.existsSync()) {
+      ConsoleLogger.info(
+        'Repositório ${package.repositoryName} já existe em $customPath, pulando clone',
+      );
+      return true;
+    }
+
+    // Cria o diretório customizado se não existir
+    final customDirectory = Directory(customPath);
+    if (!customDirectory.existsSync()) {
+      customDirectory.createSync(recursive: true);
+    }
+
+    ConsoleLogger.info('Clonando ${package.repositoryName} em $customPath...');
+
+    // Tenta primeiro via SSH
+    if (await _tryClone(package.sshUrl, package.ref, repoDir.path)) {
+      ConsoleLogger.success(
+        '${package.repositoryName} clonado via SSH em $customPath',
+      );
+      return true;
+    }
+
+    ConsoleLogger.info('SSH falhou, tentando HTTPS...');
+
+    // Tenta via HTTPS
+    if (await _tryClone(package.url, package.ref, repoDir.path)) {
+      ConsoleLogger.success(
+        '${package.repositoryName} clonado via HTTPS em $customPath',
+      );
+      return true;
+    }
+
+    ConsoleLogger.error(
+      'Falha ao clonar ${package.repositoryName} em $customPath',
+    );
+  }
+
+  /// Remove um repositório de um caminho customizado
+  Future<bool> removeRepositoryFromPath(
+    GitPackage package,
+    String customPath,
+  ) async {
+    final repoDir = Directory('$customPath/${package.repositoryName}');
+
+    if (!repoDir.existsSync()) {
+      return true; // Já removido
+    }
+
+    try {
+      ConsoleLogger.info(
+        'Removendo ${package.repositoryName} de $customPath...',
+      );
+      repoDir.deleteSync(recursive: true);
+      ConsoleLogger.success(
+        '${package.repositoryName} removido de $customPath',
+      );
+      return true;
+    } catch (e) {
+      ConsoleLogger.error(
+        'Falha ao remover ${package.repositoryName} de $customPath: $e',
+      );
     }
   }
 
