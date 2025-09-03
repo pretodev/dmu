@@ -13,7 +13,8 @@ void main(List<String> arguments) async {
   final parser = ArgParser()
     ..addCommand('add')
     ..addCommand('remove')
-    ..addCommand('update')
+    ..addCommand('pub-get')
+    ..addCommand('clean')
     ..addFlag(
       'help',
       abbr: 'h',
@@ -40,6 +41,22 @@ void main(List<String> arguments) async {
     'help',
     abbr: 'h',
     help: 'Mostra ajuda para o comando remove',
+    negatable: false,
+  );
+
+  // Configurar subcomando 'get'
+  parser.commands['pub-get']!.addFlag(
+    'help',
+    abbr: 'h',
+    help: 'Mostra ajuda para o comando get',
+    negatable: false,
+  );
+
+  // Configurar subcomando 'clean'
+  parser.commands['clean']!.addFlag(
+    'help',
+    abbr: 'h',
+    help: 'Mostra ajuda para o comando clean',
     negatable: false,
   );
 
@@ -88,6 +105,22 @@ void main(List<String> arguments) async {
         await syncpack.remove(packageName);
         break;
 
+      case 'pub-get':
+        if (command['help'] as bool) {
+          _showGetHelp();
+          return;
+        }
+        await syncpack.pubGet();
+        break;
+
+      case 'clean':
+        if (command['help'] as bool) {
+          _showCleanHelp();
+          return;
+        }
+        await syncpack.clean();
+        break;
+
       default:
         ConsoleLogger.error('Comando desconhecido: ${command.name}');
     }
@@ -112,8 +145,14 @@ void _showHelp(ArgParser parser) {
   print(
     '  remove <package-name>  Remove um pacote do dependency_override e pasta local',
   );
-  print('  update [package-name]  Atualiza um ou todos os pacotes\n');
-  print('Opções globais:');
+  print('  update [package-name]  Atualiza um ou todos os pacotes');
+  print(
+    '  pub-get              Executa flutter clean e pub get em todos os dependency_overrides',
+  );
+  print(
+    '  clean                Limpa as dependências de todos os pacotes dart dentro do projeto',
+  );
+  print('\nOpções globais:');
   print(parser.usage);
   print(
     '\nUse "syncpack <comando> --help" para mais informações sobre um comando específico.',
@@ -137,4 +176,20 @@ void _showRemoveHelp() {
   print('Opções:');
   print('  -h, --help  Mostra esta ajuda\n');
   print('Verifica se o pacote está sendo usado antes de remover.');
+}
+
+void _showGetHelp() {
+  print('Executa flutter clean e pub get em todos os dependency_overrides\n');
+  print('Uso: syncpack get [opções]\n');
+  print('Opções:');
+  print('  -h, --help  Mostra esta ajuda\n');
+  print('Baixa as dependências de todos o pacotes dart dentro do projeto');
+}
+
+void _showCleanHelp() {
+  print('Limpa completamente as dependências do projeto\n');
+  print('Uso: syncpack clean [opções]\n');
+  print('Opções:');
+  print('  -h, --help  Mostra esta ajuda\n');
+  print('Limpa as dependências de todos os pacotes dart dentro do projeto');
 }

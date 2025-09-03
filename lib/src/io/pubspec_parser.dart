@@ -82,6 +82,27 @@ class PubspecParser {
     return overrides;
   }
 
+  /// Extrai os overrides existentes com seus caminhos do pubspec.yaml
+  Map<String, String> parseExistingOverridesWithPaths() {
+    final overrides = <String, String>{};
+    final dependencyOverrides =
+        _yamlContent['dependency_overrides'] as YamlMap?;
+
+    if (dependencyOverrides == null) return overrides;
+
+    for (final entry in dependencyOverrides.entries) {
+      final packageName = entry.key as String;
+      final packageConfig = entry.value;
+
+      if (packageConfig is YamlMap && packageConfig.containsKey('path')) {
+        final path = packageConfig['path'] as String;
+        overrides[packageName] = path;
+      }
+    }
+
+    return overrides;
+  }
+
   /// Atualiza o pubspec.yaml com novos dependency_overrides
   void updateDependencyOverrides(
     List<GitPackage> selectedPackages,

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:process/process.dart';
+import 'package:syncpack/src/io/file_searcher.dart';
 
 import 'src/console/console_logger.dart';
 import 'src/git/git_manager.dart';
@@ -14,6 +15,7 @@ class Syncpack {
   final PubspecParser _pubspecParser;
   final GitManager _gitManager;
   final FileManager _fileManager;
+  final FileSearcher _fileSearcher;
 
   Syncpack._(
     this.projectRoot,
@@ -21,6 +23,7 @@ class Syncpack {
     this._pubspecParser,
     this._gitManager,
     this._fileManager,
+    this._fileSearcher,
   );
 
   factory Syncpack.forDirectory(
@@ -36,6 +39,7 @@ class Syncpack {
       PubspecParser(pubspecPath: pubspecPath),
       GitManager(packagesDir: packagesDir),
       FileManager(projectRoot: projectRoot),
+      FileSearcher(projectRoot: projectRoot),
     );
   }
 
@@ -212,32 +216,75 @@ class Syncpack {
     return fvmrcFile.existsSync();
   }
 
-  /// Limpa completamente tudo: remove packages/, dependency_overrides e entradas do .gitignore
-  Future<void> cleanAll() async {
-    ConsoleLogger.info('Iniciando limpeza completa...');
-
+  /// Executa flutter clean e pub get em todos os pacotes de dependency_overrides
+  Future<void> pubGet() async {
     try {
-      // Remove o diretório packages/ se existir
-      final packagesDirectory = Directory(packagesDir);
-      if (packagesDirectory.existsSync()) {
-        ConsoleLogger.info('Removendo diretório packages/...');
-        await packagesDirectory.delete(recursive: true);
-        ConsoleLogger.success('Diretório packages/ removido');
-      } else {
-        ConsoleLogger.info('Diretório packages/ não existe');
+      final isFdAvailable = await _fileSearcher.isFdAvailable();
+      if (!isFdAvailable) {
+        ConsoleLogger.error('fd não está instalado.');
       }
 
-      // Limpa todos os dependency_overrides do pubspec.yaml
-      ConsoleLogger.info('Limpando dependency_overrides do pubspec.yaml...');
-      _pubspecParser.clearAllDependencyOverrides();
-      ConsoleLogger.success('dependency_overrides limpos');
+      final projects = await _fileSearcher.availablesDartProjects();
+      if (projects.isEmpty) {
+        return;
+      }
 
-      // Limpa entradas relacionadas no .gitignore
-      ConsoleLogger.info('Limpando entradas do .gitignore...');
-      _fileManager.clearPackagesFromGitignore();
-      ConsoleLogger.success('Entradas do .gitignore limpas');
+      final processManager = const LocalProcessManager();
+      final useFvm = _shouldUseFvm();
+      final flutterCommand = useFvm ? 'fvm' : 'flutter';
+
+      ConsoleLogger.info('Baixando dependências...');
+      for (final project in projects) {
+        final pubGetArgs = useFvm ? ['flutter', 'pub', 'get'] : ['pub', 'get'];
+        final pubGetResult = await processManager.run([
+          flutterCommand,
+          ...pubGetArgs,
+        ], workingDirectory: project);
+        if (pubGetResult.exitCode != 0) {
+          ConsoleLogger.warning(
+            'Falha: ${useFvm ? 'fvm flutter' : 'flutter'} pub get em $project\n${pubGetResult.stderr}',
+          );
+          continue;
+        }
+      }
     } catch (e) {
-      ConsoleLogger.error('Erro durante a limpeza: $e');
+      ConsoleLogger.error('Erro ao executar comando get: $e');
+    }
+  }
+
+  /// Limpa completamente as dependências do projeto
+  Future<void> clean() async {
+    try {
+      final isFdAvailable = await _fileSearcher.isFdAvailable();
+      if (!isFdAvailable) {
+        ConsoleLogger.error('fd não está instalado.');
+      }
+
+      final projects = await _fileSearcher.availablesDartProjects();
+      if (projects.isEmpty) {
+        return;
+      }
+
+      final processManager = const LocalProcessManager();
+      final useFvm = _shouldUseFvm();
+      final flutterCommand = useFvm ? 'fvm' : 'flutter';
+
+      ConsoleLogger.info('Limpando dependências...');
+      for (final project in projects) {
+        final cleanArgs = useFvm ? ['flutter', 'clean'] : ['clean'];
+        final cleanResult = await processManager.run([
+          flutterCommand,
+          ...cleanArgs,
+        ], workingDirectory: project);
+        if (cleanResult.exitCode != 0) {
+          ConsoleLogger.warning(
+            'Falha: ${useFvm ? 'fvm flutter' : 'flutter'} clean em $project\n${cleanResult.stderr}',
+          );
+          continue;
+        }
+      }
+    } catch (e) {
+      ConsoleLogger.error('Erro ao executar comando clean: $e');
     }
   }
 }
