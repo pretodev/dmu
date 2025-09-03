@@ -15,6 +15,7 @@ class PubspecParser {
     _loadPubspec();
   }
 
+  /// Carrega o conteúdo do pubspec.yaml
   void _loadPubspec() {
     final file = File(pubspecPath);
     if (!file.existsSync()) {
@@ -41,7 +42,6 @@ class PubspecParser {
         final gitConfig = packageConfig['git'];
 
         if (gitConfig is String) {
-          // Formato simples: git: url
           gitPackages.add(
             GitPackage(
               name: packageName,
@@ -50,7 +50,6 @@ class PubspecParser {
             ),
           );
         } else if (gitConfig is YamlMap) {
-          // Formato completo: git: { url: ..., ref: ..., path: ... }
           final url = gitConfig['url'] as String?;
           final ref = gitConfig['ref'] as String? ?? 'main';
           final path = gitConfig['path'] as String?;
@@ -77,11 +76,7 @@ class PubspecParser {
 
     for (final entry in dependencyOverrides.entries) {
       final packageName = entry.key as String;
-      final packageConfig = entry.value;
-
-      if (packageConfig is YamlMap && packageConfig.containsKey('path')) {
-        overrides.add(packageName);
-      }
+      overrides.add(packageName);
     }
 
     return overrides;
@@ -92,24 +87,20 @@ class PubspecParser {
     List<GitPackage> selectedPackages,
     String packagesDir,
   ) {
-    // Remove o bloco dependency_overrides existente
     _removeDependencyOverrides();
-
     if (selectedPackages.isEmpty) {
       _writePubspec();
       return;
     }
-
-    // Adiciona novo bloco dependency_overrides
     _addDependencyOverrides(selectedPackages, packagesDir);
     _writePubspec();
   }
 
+  /// Remove o bloco dependency_overrides existente do pubspec.yaml
   void _removeDependencyOverrides() {
     int? startIndex;
     int? endIndex;
 
-    // Encontra o início do bloco dependency_overrides
     for (int i = 0; i < _lines.length; i++) {
       if (_lines[i].trim().startsWith('dependency_overrides:')) {
         startIndex = i;
@@ -119,7 +110,6 @@ class PubspecParser {
 
     if (startIndex == null) return;
 
-    // Encontra o fim do bloco (próxima seção no mesmo nível ou fim do arquivo)
     for (int i = startIndex + 1; i < _lines.length; i++) {
       final line = _lines[i];
       if (line.trim().isEmpty) continue;
@@ -133,7 +123,6 @@ class PubspecParser {
 
     endIndex ??= _lines.length;
 
-    // Remove as linhas do bloco dependency_overrides
     _lines.removeRange(startIndex, endIndex);
   }
 
@@ -146,7 +135,6 @@ class PubspecParser {
       overrideLines.add('    path: $relativePath');
     }
 
-    // Adiciona uma linha em branco antes se necessário
     if (_lines.isNotEmpty && _lines.last.trim().isNotEmpty) {
       _lines.add('');
     }
@@ -179,15 +167,15 @@ class PubspecParser {
   }
 
   /// Adiciona um único pacote ao dependency_overrides
+  /// Se o pacote já existir, substitui a configuração existente
   void addSingleDependencyOverride(GitPackage package, String packagesDir) {
     final existingOverrides = parseExistingOverrides();
 
-    // Se já existe, não adiciona novamente
     if (existingOverrides.contains(package.name)) {
       ConsoleLogger.info(
-        'Pacote ${package.name} já está em dependency_overrides',
+        'Substituindo configuração existente do pacote ${package.name}',
       );
-      return;
+      _removeSinglePackageFromOverrides(package.name);
     }
 
     int? insertIndex = _findDependencyOverridesInsertIndex();
@@ -209,14 +197,18 @@ class PubspecParser {
 
   /// Remove um único pacote do dependency_overrides
   void removeSingleDependencyOverride(String packageName) {
+    _removeSinglePackageFromOverrides(packageName);
+    _writePubspec();
+    ConsoleLogger.info('Removido $packageName do dependency_overrides');
+  }
+
+  /// Remove um único pacote do dependency_overrides sem escrever o arquivo
+  void _removeSinglePackageFromOverrides(String packageName) {
     int? startIndex;
     int? endIndex;
-
-    // Encontra o pacote específico no bloco dependency_overrides
     for (int i = 0; i < _lines.length; i++) {
       final line = _lines[i].trim();
       if (line == '$packageName:' && i > 0) {
-        // Verifica se está dentro do bloco dependency_overrides
         bool inOverridesBlock = false;
         for (int j = i - 1; j >= 0; j--) {
           final prevLine = _lines[j].trim();
@@ -238,24 +230,18 @@ class PubspecParser {
     }
 
     if (startIndex == null) {
-      ConsoleLogger.info(
-        'Pacote $packageName não encontrado em dependency_overrides',
-      );
       return;
     }
 
-    // Encontra o fim da configuração do pacote
     for (int i = startIndex + 1; i < _lines.length; i++) {
       final line = _lines[i];
       if (line.trim().isEmpty) continue;
 
-      // Se não começa com espaços (próximo pacote ou nova seção)
       if (!line.startsWith('  ')) {
         endIndex = i;
         break;
       }
 
-      // Se começa com 2 espaços mas não é indentação de propriedade (próximo pacote)
       if (line.startsWith('  ') &&
           !line.startsWith('    ') &&
           line.contains(':')) {
@@ -266,14 +252,9 @@ class PubspecParser {
 
     endIndex ??= _lines.length;
 
-    // Remove as linhas do pacote
     _lines.removeRange(startIndex, endIndex);
 
-    // Remove o bloco dependency_overrides se ficou vazio
     _removeEmptyDependencyOverridesBlock();
-
-    _writePubspec();
-    ConsoleLogger.info('Removido $packageName do dependency_overrides');
   }
 
   int? _findDependencyOverridesInsertIndex() {
@@ -296,7 +277,6 @@ class PubspecParser {
   void _removeEmptyDependencyOverridesBlock() {
     for (int i = 0; i < _lines.length; i++) {
       if (_lines[i].trim() == 'dependency_overrides:') {
-        // Verifica se o bloco está vazio (próxima linha não indentada ou fim do arquivo)
         bool isEmpty = true;
         for (int j = i + 1; j < _lines.length; j++) {
           final line = _lines[j];
@@ -311,7 +291,6 @@ class PubspecParser {
 
         if (isEmpty) {
           _lines.removeAt(i);
-          // Remove linha em branco anterior se existir
           if (i > 0 && _lines[i - 1].trim().isEmpty) {
             _lines.removeAt(i - 1);
           }

@@ -88,16 +88,6 @@ void main(List<String> arguments) async {
         await syncpack.remove(packageName);
         break;
 
-      case 'update':
-        if (command['help'] as bool) {
-          _showUpdateHelp();
-          return;
-        }
-        final packageName = command.rest.isNotEmpty ? command.rest.first : null;
-        final cleanLock = command['clean-lock'] as bool;
-        await syncpack.update(packageName: packageName, cleanLock: cleanLock);
-        break;
-
       default:
         ConsoleLogger.error('Comando desconhecido: ${command.name}');
     }
@@ -147,13 +137,4 @@ void _showRemoveHelp() {
   print('Opções:');
   print('  -h, --help  Mostra esta ajuda\n');
   print('Verifica se o pacote está sendo usado antes de remover.');
-}
-
-void _showUpdateHelp() {
-  print('Atualiza um ou todos os pacotes\n');
-  print('Uso: syncpack update [package-name] [opções]\n');
-  print('Opções:');
-  print('  --clean-lock  Remove pubspec.lock antes de atualizar');
-  print('  -h, --help    Mostra esta ajuda\n');
-  print('Se package-name não for especificado, atualiza todos os pacotes.');
 }
