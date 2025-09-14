@@ -1,0 +1,36 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "syncpack-add",
+      "request": "launch",
+      "type": "dart",
+      "program": "bin/syncpack_debug.dart",
+      "args": ["add", "./resources"]
+    },
+    {
+      "name": "syncpack-remove",
+      "request": "launch",
+      "type": "dart",
+      "program": "bin/syncpack_debug.dart",
+      "args": ["remove", "./resources"]
+    },
+    {
+      "name": "syncpack-pub-get",
+      "request": "launch",
+      "type": "dart",
+      "program": "bin/syncpack_debug.dart",
+      "args": ["pub-get", "./resources"]
+    },
+    {
+      "name": "syncpack-clean",
+      "request": "launch",
+      "type": "dart",
+      "program": "bin/syncpack_debug.dart",
+      "args": ["clean", "./resources"]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+name: dmu_example
+description: A sample command-line application.
+version: 1.0.0
+
+publish_to: "none"
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  dio:
+    git:
+      url: https://github.com/cfug/dio
+      path: dio
+
+  cron:
+    git:
+      url: https://github.com/agilord/cron
+      ref: note
