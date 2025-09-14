@@ -4,7 +4,7 @@ import 'package:syncpack/src/console/console_confirm.dart';
 
 import '../console/console_logger.dart';
 
-/// Gestor da pasta onde os repositorios serão clonados
+/// Manager for the folder where repositories will be cloned
 class FileManager {
   final String projectRoot;
 
@@ -25,7 +25,7 @@ class FileManager {
     return false;
   }
 
-  /// Adiciona um caminho ao .gitignore
+  /// Adds a path to .gitignore
   void addPackageToGitignore(String path) {
     final gitignoreFile = File('$projectRoot/.gitignore');
 
@@ -36,7 +36,7 @@ class FileManager {
     }
 
     if (!ConsoleConfirm.ask(
-      "Gostaria de adicionar $ignorePath ao .gitignore?",
+      "Would you like to add $ignorePath to .gitignore?",
     )) {
       return;
     }
@@ -59,15 +59,15 @@ class FileManager {
     lines.add(ignorePath);
     gitignoreFile.writeAsStringSync(lines.join('\n'));
 
-    ConsoleLogger.info('Adicionado $path ao .gitignore');
+    ConsoleLogger.info('Added $path to .gitignore');
   }
 
-  /// Verifica se um arquivo existe
+  /// Checks if a file exists
   bool fileExists(String path) {
     return File(path).existsSync();
   }
 
-  /// Cria um diretório se não existir
+  /// Creates a directory if it doesn't exist
   void ensureDirectoryExists(String path) {
     final dir = Directory(path);
     if (!dir.existsSync()) {
@@ -75,7 +75,7 @@ class FileManager {
     }
   }
 
-  /// Remove um diretório se estiver vazio
+  /// Removes a directory if it's empty
   void removeEmptyDirectory(String path) {
     final dir = Directory(path);
     if (dir.existsSync()) {
@@ -86,12 +86,12 @@ class FileManager {
     }
   }
 
-  /// Obtém o caminho absoluto de um arquivo
+  /// Gets the absolute path of a file
   String getAbsolutePath(String relativePath) {
     return File('$projectRoot/$relativePath').absolute.path;
   }
 
-  /// Limpa todas as entradas relacionadas a package do .gitignore
+  /// Clears all package-related entries from .gitignore
   void clearPackagesFromGitignore() {
     final gitignoreFile = File('$projectRoot/.gitignore');
 
@@ -102,7 +102,7 @@ class FileManager {
     final content = gitignoreFile.readAsStringSync();
     final lines = content.split('\n');
 
-    // Remove todas as linhas que começam com 'package/'
+    // Remove all lines that start with 'package/'
     final filteredLines = lines
         .where((line) => !line.trim().startsWith('package/'))
         .toList();
@@ -110,7 +110,7 @@ class FileManager {
     if (filteredLines.length != lines.length) {
       gitignoreFile.writeAsStringSync(filteredLines.join('\n'));
       ConsoleLogger.info(
-        'Todas as entradas de package foram removidas do .gitignore',
+        'All package entries have been removed from .gitignore',
       );
     }
   }

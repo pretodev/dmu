@@ -4,11 +4,11 @@ import 'package:args/args.dart';
 import 'package:syncpack/src/console/console_logger.dart';
 import 'package:syncpack/syncpack.dart';
 
-/// Entry point do Syncpack
+/// Syncpack entry point
 ///
-/// Gerencia dependências Git como pacotes locais em projetos Dart/Flutter.
-/// Permite clonar repositórios localmente e configurar dependency_overrides
-/// automaticamente no pubspec.yaml.
+/// Manages Git dependencies as local packages in Dart/Flutter projects.
+/// Allows cloning repositories locally and automatically configuring dependency_overrides
+/// in pubspec.yaml.
 void main(List<String> arguments) async {
   final parser = ArgParser()
     ..addCommand('add')
@@ -18,45 +18,42 @@ void main(List<String> arguments) async {
     ..addFlag(
       'help',
       abbr: 'h',
-      help: 'Mostra esta mensagem de ajuda',
+      help: 'Shows this help message',
       negatable: false,
     );
 
-  // Configurar subcomando 'add'
   parser.commands['add']!
     ..addOption(
       'path',
-      help: 'Caminho relativo onde o pacote será clonado (padrão: packages)',
+      help:
+          'Relative path where the package will be cloned (default: packages)',
       defaultsTo: 'packages',
     )
     ..addFlag(
       'help',
       abbr: 'h',
-      help: 'Mostra ajuda para o comando add',
+      help: 'Shows help for the add command',
       negatable: false,
     );
 
-  // Configurar subcomando 'remove'
   parser.commands['remove']!.addFlag(
     'help',
     abbr: 'h',
-    help: 'Mostra ajuda para o comando remove',
+    help: 'Shows help for the remove command',
     negatable: false,
   );
 
-  // Configurar subcomando 'get'
   parser.commands['pub-get']!.addFlag(
     'help',
     abbr: 'h',
-    help: 'Mostra ajuda para o comando get',
+    help: 'Shows help for the get command',
     negatable: false,
   );
 
-  // Configurar subcomando 'clean'
   parser.commands['clean']!.addFlag(
     'help',
     abbr: 'h',
-    help: 'Mostra ajuda para o comando clean',
+    help: 'Shows help for the clean command',
     negatable: false,
   );
 
@@ -73,7 +70,7 @@ void main(List<String> arguments) async {
 
     if (command == null) {
       ConsoleLogger.error(
-        'Comando não especificado. Use --help para ver os comandos disponíveis.',
+        'Command not specified. Use --help to see available commands.',
       );
     }
 
@@ -85,7 +82,7 @@ void main(List<String> arguments) async {
         }
         if (command.rest.isEmpty) {
           ConsoleLogger.error(
-            'Nome do pacote é obrigatório para o comando add.',
+            'Package name is required for the add command.',
           );
         }
         await syncpack.add(command.rest.first);
@@ -98,7 +95,7 @@ void main(List<String> arguments) async {
         }
         if (command.rest.isEmpty) {
           ConsoleLogger.error(
-            'Nome do pacote é obrigatório para o comando remove.',
+            'Package name is required for the remove command.',
           );
         }
         final packageName = command.rest.first;
@@ -122,74 +119,74 @@ void main(List<String> arguments) async {
         break;
 
       default:
-        ConsoleLogger.error('Comando desconhecido: ${command.name}');
+        ConsoleLogger.error('Unknown command: ${command.name}');
     }
   } catch (e) {
     if (e is FormatException) {
-      ConsoleLogger.error('Erro nos argumentos: ${e.message}');
+      ConsoleLogger.error('Argument error: ${e.message}');
     } else {
-      ConsoleLogger.error('Erro fatal: $e');
+      ConsoleLogger.error('Fatal error: $e');
     }
   }
 }
 
 void _showHelp(ArgParser parser) {
   print(
-    'Syncpack - Gerenciador de dependências Git para projetos Dart/Flutter\n',
+    'Syncpack - Git dependency manager for Dart/Flutter projects\n',
   );
-  print('Uso: syncpack <comando> [opções]\n');
-  print('Comandos disponíveis:');
+  print('Usage: syncpack <command> [options]\n');
+  print('Available commands:');
   print(
-    '  add <package-name>     Adiciona um pacote ao dependency_override e clona localmente',
-  );
-  print(
-    '  remove <package-name>  Remove um pacote do dependency_override e pasta local',
-  );
-  print('  update [package-name]  Atualiza um ou todos os pacotes');
-  print(
-    '  pub-get              Executa flutter clean e pub get em todos os dependency_overrides',
+    '  add <package-name>     Adds a package to dependency_override and clones locally',
   );
   print(
-    '  clean                Limpa as dependências de todos os pacotes dart dentro do projeto',
+    '  remove <package-name>  Removes a package from dependency_override and local folder',
   );
-  print('\nOpções globais:');
+  print('  update [package-name]  Updates one or all packages');
+  print(
+    '  pub-get              Runs flutter clean and pub get on all dependency_overrides',
+  );
+  print(
+    '  clean                Cleans dependencies of all dart packages within the project',
+  );
+  print('\nGlobal options:');
   print(parser.usage);
   print(
-    '\nUse "syncpack <comando> --help" para mais informações sobre um comando específico.',
+    '\nUse "syncpack <command> --help" for more information about a specific command.',
   );
 }
 
 void _showAddHelp() {
-  print('Adiciona um pacote ao dependency_override e clona localmente\n');
-  print('Uso: syncpack add <package-name> [opções]\n');
-  print('Opções:');
-  print('  --path <caminho>  Caminho relativo onde clonar (padrão: package)');
-  print('  -h, --help        Mostra esta ajuda\n');
+  print('Adds a package to dependency_override and clones locally\n');
+  print('Usage: syncpack add <package-name> [options]\n');
+  print('Options:');
+  print('  --path <path>     Relative path where to clone (default: package)');
+  print('  -h, --help        Shows this help\n');
   print(
-    'O pacote deve estar presente em dependencies e ser um repositório Git.',
+    'The package must be present in dependencies and be a Git repository.',
   );
 }
 
 void _showRemoveHelp() {
-  print('Remove um pacote do dependency_override e pasta local\n');
-  print('Uso: syncpack remove <package-name> [opções]\n');
-  print('Opções:');
-  print('  -h, --help  Mostra esta ajuda\n');
-  print('Verifica se o pacote está sendo usado antes de remover.');
+  print('Removes a package from dependency_override and local folder\n');
+  print('Usage: syncpack remove <package-name> [options]\n');
+  print('Options:');
+  print('  -h, --help  Shows this help\n');
+  print('Checks if the package is being used before removing.');
 }
 
 void _showGetHelp() {
-  print('Executa flutter clean e pub get em todos os dependency_overrides\n');
-  print('Uso: syncpack get [opções]\n');
-  print('Opções:');
-  print('  -h, --help  Mostra esta ajuda\n');
-  print('Baixa as dependências de todos o pacotes dart dentro do projeto');
+  print('Runs flutter clean and pub get on all dependency_overrides\n');
+  print('Usage: syncpack get [options]\n');
+  print('Options:');
+  print('  -h, --help  Shows this help\n');
+  print('Downloads dependencies of all dart packages within the project');
 }
 
 void _showCleanHelp() {
-  print('Limpa completamente as dependências do projeto\n');
-  print('Uso: syncpack clean [opções]\n');
-  print('Opções:');
-  print('  -h, --help  Mostra esta ajuda\n');
-  print('Limpa as dependências de todos os pacotes dart dentro do projeto');
+  print('Completely cleans project dependencies\n');
+  print('Usage: syncpack clean [options]\n');
+  print('Options:');
+  print('  -h, --help  Shows this help\n');
+  print('Cleans dependencies of all dart packages within the project');
 }

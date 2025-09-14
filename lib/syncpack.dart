@@ -52,12 +52,12 @@ class Syncpack {
     return Syncpack.forDirectory(currentDir, packagesSubdir: packagesSubdir);
   }
 
-  /// Adiciona um pacote ao dependency_override e clona localmente
+  /// Adds a package to dependency_override and clones locally
   Future<void> add(String packageName) async {
     try {
       if (!await _gitManager.isGitAvailable()) {
         ConsoleLogger.error(
-          'Git não está instalado ou não está disponível no PATH',
+          'Git is not installed or not available in PATH',
         );
       }
 
@@ -68,14 +68,14 @@ class Syncpack {
 
       if (package == null) {
         ConsoleLogger.error(
-          'Pacote "$packageName" não encontrado nas dependencies ou não é um repositório Git',
+          'Package "$packageName" not found in dependencies or is not a Git repository',
         );
       }
 
-      ConsoleLogger.info('Adicionando pacote: $packageName');
+      ConsoleLogger.info('Adding package: $packageName');
       final cloned = await _gitManager.cloneRepository(package);
       if (!cloned) {
-        ConsoleLogger.error('Erro ao clonar pacote: $packageName');
+        ConsoleLogger.error('Error cloning package: $packageName');
       }
 
       _pubspecParser.addSingleDependencyOverride(package, packagesDir);
@@ -84,19 +84,19 @@ class Syncpack {
 
       _fileManager.addPackageToGitignore(packagesDir);
 
-      ConsoleLogger.success('Pacote "$packageName" adicionado com sucesso!');
+      ConsoleLogger.success('Package "$packageName" added successfully!');
     } catch (e) {
-      ConsoleLogger.error('Erro ao adicionar pacote: $e');
+      ConsoleLogger.error('Error adding package: $e');
     }
   }
 
-  /// Remove um pacote do dependency_override e pasta local
+  /// Removes a package from dependency_override and local folder
   Future<void> remove(String packageName) async {
     try {
       final existingOverrides = _pubspecParser.parseExistingOverrides();
       if (!existingOverrides.contains(packageName)) {
         ConsoleLogger.warning(
-          'Pacote "$packageName" não está no dependency_overrides',
+          'Package "$packageName" is not in dependency_overrides',
         );
         return;
       }
@@ -108,29 +108,29 @@ class Syncpack {
 
       if (package == null) {
         ConsoleLogger.error(
-          'Pacote "$packageName" não encontrado nas dependencies ou não é um repositório Git',
+          'Package "$packageName" not found in dependencies or is not a Git repository',
         );
       }
 
-      ConsoleLogger.info('Removendo pacote: $packageName');
+      ConsoleLogger.info('Removing package: $packageName');
       _pubspecParser.removeSingleDependencyOverride(packageName);
 
       final packagePath = '$packagesDir/${package.repositoryName}';
       final packageDir = Directory(packagePath);
       if (packageDir.existsSync()) {
         await packageDir.delete(recursive: true);
-        ConsoleLogger.info('Pasta do pacote removida: $packagePath');
+        ConsoleLogger.info('Package folder removed: $packagePath');
       }
 
       await _runFlutterCommands();
 
-      ConsoleLogger.success('Pacote "$packageName" removido com sucesso!');
+      ConsoleLogger.success('Package "$packageName" removed successfully!');
     } catch (e) {
-      ConsoleLogger.error('Erro ao remover pacote: $e');
+      ConsoleLogger.error('Error removing package: $e');
     }
   }
 
-  /// Executa comandos Flutter clean e pub get
+  /// Executes Flutter clean and pub get commands
   Future<void> _runFlutterCommands([
     List<GitPackage> packages = const [],
   ]) async {
@@ -146,12 +146,12 @@ class Syncpack {
 
         if (!packageDir.existsSync()) {
           ConsoleLogger.warning(
-            'Diretório do pacote $packageName não encontrado: $packagePath',
+            'Package directory $packageName not found: $packagePath',
           );
           continue;
         }
 
-        ConsoleLogger.info('Configurando pacote: $packageName');
+        ConsoleLogger.info('Setting up package: $packageName');
 
         ConsoleLogger.info(' ${useFvm ? 'fvm flutter' : 'flutter'} clean');
         final cleanArgs = useFvm ? ['flutter', 'clean'] : ['clean'];
@@ -162,7 +162,7 @@ class Syncpack {
 
         if (cleanResult.exitCode != 0) {
           ConsoleLogger.warning(
-            'Falha: ${useFvm ? 'fvm flutter' : 'flutter'} clean\n${cleanResult.stderr}',
+            'Failed: ${useFvm ? 'fvm flutter' : 'flutter'} clean\n${cleanResult.stderr}',
           );
           continue;
         }
@@ -176,13 +176,13 @@ class Syncpack {
 
         if (pubGetResult.exitCode != 0) {
           ConsoleLogger.warning(
-            'Falha: ${useFvm ? 'fvm flutter' : 'flutter'} pub get\n${pubGetResult.stderr}',
+            'Failed: ${useFvm ? 'fvm flutter' : 'flutter'} pub get\n${pubGetResult.stderr}',
           );
           continue;
         }
       }
 
-      ConsoleLogger.info('Configurando projeto raiz');
+      ConsoleLogger.info('Setting up root project');
 
       ConsoleLogger.info('  ${useFvm ? 'fvm flutter' : 'flutter'} clean');
       final cleanArgs = useFvm ? ['flutter', 'clean'] : ['clean'];
@@ -193,7 +193,7 @@ class Syncpack {
 
       if (cleanResult.exitCode != 0) {
         ConsoleLogger.warning(
-          'Falha: ${useFvm ? 'fvm flutter' : 'flutter'} clean\n${cleanResult.stderr}',
+          'Failed: ${useFvm ? 'fvm flutter' : 'flutter'} clean\n${cleanResult.stderr}',
         );
       }
 
@@ -206,7 +206,7 @@ class Syncpack {
 
       if (pubGetResult.exitCode != 0) {
         ConsoleLogger.warning(
-          'Falha: ${useFvm ? 'fvm flutter' : 'flutter'} pub get\n${pubGetResult.stderr}',
+          'Failed: ${useFvm ? 'fvm flutter' : 'flutter'} pub get\n${pubGetResult.stderr}',
         );
       }
     } catch (e) {
@@ -214,7 +214,7 @@ class Syncpack {
     }
   }
 
-  /// Verifica se deve usar fvm baseado na existência do arquivo .fvmrc
+  /// Checks if fvm should be used based on .fvmrc file existence
   bool _shouldUseFvm() {
     final fvmrcFile = File('$projectRoot/.fvmrc');
     return fvmrcFile.existsSync();
@@ -225,7 +225,7 @@ class Syncpack {
     try {
       final isFdAvailable = await _fileSearcher.isFdAvailable();
       if (!isFdAvailable) {
-        ConsoleLogger.error('fd não está instalado.');
+        ConsoleLogger.error('fd is not installed.');
       }
 
       final projects = await _fileSearcher.availablesDartProjects();
@@ -237,7 +237,7 @@ class Syncpack {
       final useFvm = _shouldUseFvm();
       final flutterCommand = useFvm ? 'fvm' : 'flutter';
 
-      ConsoleLogger.info('Baixando dependências...');
+      ConsoleLogger.info('Downloading dependencies...');
       for (final project in projects) {
         final pubGetArgs = useFvm ? ['flutter', 'pub', 'get'] : ['pub', 'get'];
         final pubGetResult = await processManager.run([
@@ -246,22 +246,22 @@ class Syncpack {
         ], workingDirectory: project);
         if (pubGetResult.exitCode != 0) {
           ConsoleLogger.warning(
-            'Falha: ${useFvm ? 'fvm flutter' : 'flutter'} pub get em $project\n${pubGetResult.stderr}',
+            'Failed: ${useFvm ? 'fvm flutter' : 'flutter'} pub get in $project\n${pubGetResult.stderr}',
           );
           continue;
         }
       }
     } catch (e) {
-      ConsoleLogger.error('Erro ao executar comando get: $e');
+      ConsoleLogger.error('Error executing get command: $e');
     }
   }
 
-  /// Limpa completamente as dependências do projeto
+  /// Completely cleans project dependencies
   Future<void> clean({bool deep = false}) async {
     try {
       final isFdAvailable = await _fileSearcher.isFdAvailable();
       if (!isFdAvailable) {
-        ConsoleLogger.error('fd não está instalado.');
+        ConsoleLogger.error('fd is not installed.');
       }
 
       final projects = await _fileSearcher.availablesDartProjects();
@@ -280,7 +280,7 @@ class Syncpack {
       final useFvm = _shouldUseFvm();
       final flutterCommand = useFvm ? 'fvm' : 'flutter';
 
-      ConsoleLogger.info('Limpando dependências...');
+      ConsoleLogger.info('Cleaning dependencies...');
       for (final project in projects) {
         final cleanArgs = useFvm ? ['flutter', 'clean'] : ['clean'];
         final cleanResult = await processManager.run([
@@ -289,13 +289,13 @@ class Syncpack {
         ], workingDirectory: project);
         if (cleanResult.exitCode != 0) {
           ConsoleLogger.warning(
-            'Falha: ${useFvm ? 'fvm flutter' : 'flutter'} clean em $project\n${cleanResult.stderr}',
+            'Failed: ${useFvm ? 'fvm flutter' : 'flutter'} clean in $project\n${cleanResult.stderr}',
           );
           continue;
         }
       }
     } catch (e) {
-      ConsoleLogger.error('Erro ao executar comando clean: $e');
+      ConsoleLogger.error('Error executing clean command: $e');
     }
   }
 }

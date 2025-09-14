@@ -5,7 +5,7 @@ import 'package:yaml/yaml.dart';
 import '../console/console_logger.dart';
 import '../git/git_package.dart';
 
-/// Parser para análise e manipulação do pubspec.yaml
+/// Parser for analysis and manipulation of pubspec.yaml
 class PubspecParser {
   final String pubspecPath;
   late final YamlMap _yamlContent;
@@ -15,11 +15,11 @@ class PubspecParser {
     _loadPubspec();
   }
 
-  /// Carrega o conteúdo do pubspec.yaml
+  /// Loads the content of pubspec.yaml
   void _loadPubspec() {
     final file = File(pubspecPath);
     if (!file.existsSync()) {
-      ConsoleLogger.error('pubspec.yaml não encontrado em: $pubspecPath');
+      ConsoleLogger.error('pubspec.yaml not found at: $pubspecPath');
     }
 
     final content = file.readAsStringSync();
@@ -27,7 +27,7 @@ class PubspecParser {
     _yamlContent = loadYaml(content) as YamlMap;
   }
 
-  /// Extrai todos os pacotes Git das dependências
+  /// Extracts all Git packages from dependencies
   List<GitPackage> parseGitDependencies() {
     final gitPackages = <GitPackage>[];
     final dependencies = _yamlContent['dependencies'] as YamlMap?;
@@ -46,7 +46,7 @@ class PubspecParser {
             GitPackage(
               name: packageName,
               url: gitConfig,
-              ref: 'main', // ref padrão
+              ref: 'main', // default ref
             ),
           );
         } else if (gitConfig is YamlMap) {
@@ -66,7 +66,7 @@ class PubspecParser {
     return gitPackages;
   }
 
-  /// Extrai os overrides existentes do pubspec.yaml
+  /// Extracts existing overrides from pubspec.yaml
   List<String> parseExistingOverrides() {
     final overrides = <String>[];
     final dependencyOverrides =
@@ -82,7 +82,7 @@ class PubspecParser {
     return overrides;
   }
 
-  /// Extrai os overrides existentes com seus caminhos do pubspec.yaml
+  /// Extracts existing overrides with their paths from pubspec.yaml
   Map<String, String> parseExistingOverridesWithPaths() {
     final overrides = <String, String>{};
     final dependencyOverrides =
@@ -103,7 +103,7 @@ class PubspecParser {
     return overrides;
   }
 
-  /// Atualiza o pubspec.yaml com novos dependency_overrides
+  /// Updates pubspec.yaml with new dependency_overrides
   void updateDependencyOverrides(
     List<GitPackage> selectedPackages,
     String packagesDir,
@@ -117,7 +117,7 @@ class PubspecParser {
     _writePubspec();
   }
 
-  /// Remove o bloco dependency_overrides existente do pubspec.yaml
+  /// Removes existing dependency_overrides block from pubspec.yaml
   void _removeDependencyOverrides() {
     int? startIndex;
     int? endIndex;
@@ -134,8 +134,6 @@ class PubspecParser {
     for (int i = startIndex + 1; i < _lines.length; i++) {
       final line = _lines[i];
       if (line.trim().isEmpty) continue;
-
-      // Se a linha não começa com espaço, é uma nova seção
       if (!line.startsWith(' ') && !line.startsWith('\t')) {
         endIndex = i;
         break;
@@ -168,16 +166,16 @@ class PubspecParser {
     file.writeAsStringSync(_lines.join('\n'));
   }
 
-  /// Limpa completamente todos os dependency_overrides do pubspec.yaml
+  /// Completely clears all dependency_overrides from pubspec.yaml
   void clearAllDependencyOverrides() {
     _removeDependencyOverrides();
     _writePubspec();
     ConsoleLogger.info(
-      'Todos os dependency_overrides foram removidos do pubspec.yaml',
+      'All dependency_overrides have been removed from pubspec.yaml',
     );
   }
 
-  /// Verifica se um pacote específico existe nas dependencies e é Git
+  /// Checks if a specific package exists in dependencies and is Git
   GitPackage? findGitPackage(String packageName) {
     final gitPackages = parseGitDependencies();
     try {
@@ -187,14 +185,14 @@ class PubspecParser {
     }
   }
 
-  /// Adiciona um único pacote ao dependency_overrides
-  /// Se o pacote já existir, substitui a configuração existente
+  /// Adds a single package to dependency_overrides
+  /// If package already exists, replaces existing configuration
   void addSingleDependencyOverride(GitPackage package, String packagesDir) {
     final existingOverrides = parseExistingOverrides();
 
     if (existingOverrides.contains(package.name)) {
       ConsoleLogger.info(
-        'Substituindo configuração existente do pacote ${package.name}',
+        'Replacing existing configuration for package ${package.name}',
       );
       _removeSinglePackageFromOverrides(package.name);
     }
@@ -206,14 +204,14 @@ class PubspecParser {
     _lines.insert(insertIndex + 1, '    path: $relativePath');
 
     _writePubspec();
-    ConsoleLogger.info('Adicionado ${package.name} ao dependency_overrides');
+    ConsoleLogger.info('Added ${package.name} to dependency_overrides');
   }
 
-  /// Remove um único pacote do dependency_overrides
+  /// Removes a single package from dependency_overrides
   void removeSingleDependencyOverride(String packageName) {
     _removeSinglePackageFromOverrides(packageName);
     _writePubspec();
-    ConsoleLogger.info('Removido $packageName do dependency_overrides');
+    ConsoleLogger.info('Removed $packageName from dependency_overrides');
   }
 
   int _getDependencyOverridesIndex() {
@@ -232,7 +230,7 @@ class PubspecParser {
     return _lines.length;
   }
 
-  /// Remove um único pacote do dependency_overrides sem escrever o arquivo
+  /// Removes a single package from dependency_overrides without writing file
   void _removeSinglePackageFromOverrides(String packageName) {
     int? startIndex;
     int? endIndex;
@@ -290,7 +288,7 @@ class PubspecParser {
   int? _findDependencyOverridesInsertIndex() {
     for (int i = 0; i < _lines.length; i++) {
       if (_lines[i].trim().startsWith('dependency_overrides:')) {
-        // Encontra o final do bloco para inserir
+        // Find end of block to insert
         for (int j = i + 1; j < _lines.length; j++) {
           final line = _lines[j];
           if (line.trim().isEmpty) continue;

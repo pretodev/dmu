@@ -2,7 +2,7 @@ import 'dart:io';
 
 enum ConsoleColor { red, green, yellow, cyan, reset }
 
-/// Gerencia output colorido no console
+/// Manages colored console output
 class ConsoleLogger {
   static const String _reset = '\x1B[0m';
   static const String _red = '\x1B[0;31m';
@@ -11,34 +11,34 @@ class ConsoleLogger {
   static const String _cyan = '\x1B[0;36m';
   static const String _bold = '\x1B[1m';
 
-  /// Imprime uma mensagem de informação
+  /// Prints an information message
   static void info(String message) {
     print('$_cyan$_bold==>$_reset$_bold $message$_reset');
   }
 
-  /// Imprime uma mensagem de sucesso
+  /// Prints a success message
   static void success(String message) {
     print('$_green$_bold==>$_reset$_bold $message$_reset');
   }
 
-  /// Imprime uma mensagem de erro e sai do programa
+  /// Prints an error message and exits the program
   static Never error(String message) {
-    stderr.writeln('$_red$_bold==> ERRO:$_reset$_red $message$_reset');
+    stderr.writeln('$_red$_bold==> ERROR:$_reset$_red $message$_reset');
     exit(1);
   }
 
-  /// Imprime uma mensagem de aviso
+  /// Prints a warning message
   static void warning(String message) {
-    print('$_yellow$_bold==> AVISO:$_reset$_yellow $message$_reset');
+    print('$_yellow$_bold==> WARNING:$_reset$_yellow $message$_reset');
   }
 
-  /// Imprime texto com cor específica
+  /// Prints text with specific color
   static void colored(String message, ConsoleColor color) {
     final colorCode = _getColorCode(color);
     print('$colorCode$message$_reset');
   }
 
-  /// Retorna texto formatado com cor
+  /// Returns formatted text with color
   static String format(String text, ConsoleColor color, {bool bold = false}) {
     final colorCode = _getColorCode(color);
     final boldCode = bold ? _bold : '';

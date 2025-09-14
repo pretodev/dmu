@@ -1,4 +1,4 @@
-/// Representa um pacote Git com suas configurações
+/// Represents a Git package with its configurations
 class GitPackage {
   final String name;
   final String url;
@@ -12,25 +12,25 @@ class GitPackage {
     this.path,
   });
 
-  /// Obtém o nome do repositório a partir da URL
+  /// Gets the repository name from the URL
   String get repositoryName {
     final uri = Uri.parse(url);
     return uri.pathSegments.last.replaceAll('.git', '');
   }
 
-  /// Obtém o caminho local onde o repositório será clonado
+  /// Gets the local path where the repository will be cloned
   String getLocalPath(String packagesDir) {
     final basePath = '$packagesDir/$repositoryName';
     return path != null ? '$basePath/$path' : basePath;
   }
 
-  /// Obtém o caminho relativo para uso no dependency_overrides
+  /// Gets the relative path for use in dependency_overrides
   String getRelativePath() {
     final basePath = 'packages/$repositoryName';
     return path != null ? '$basePath/$path' : basePath;
   }
 
-  /// Converte URL HTTPS para SSH (específico para Azure DevOps)
+  /// Converts HTTPS URL to SSH (specific for Azure DevOps)
   String get sshUrl {
     return url
         .replaceAll('https://dev.azure.com/', 'git@ssh.dev.azure.com:v3/')
@@ -38,7 +38,7 @@ class GitPackage {
         .replaceAll('%20', ' ');
   }
 
-  /// Formata o nome do pacote para exibição (capitaliza palavras)
+  /// Formats the package name for display (capitalizes words)
   String get displayName {
     return name
         .replaceAll('_', ' ')

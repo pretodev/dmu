@@ -5,7 +5,7 @@ import 'package:process/process.dart';
 import '../console/console_logger.dart';
 import 'git_package.dart';
 
-/// Gerencia operações Git (clone, remoção)
+/// Manages Git operations (clone, removal)
 class GitManager {
   final ProcessManager _processManager;
   final String packagesDir;
@@ -15,88 +15,81 @@ class GitManager {
     ProcessManager? processManager,
   }) : _processManager = processManager ?? const LocalProcessManager();
 
-  /// Clona um repositório Git
+  /// Clones a Git repository
   Future<bool> cloneRepository(GitPackage package) async {
     final repoDir = Directory('$packagesDir/${package.repositoryName}');
 
     if (repoDir.existsSync()) {
       ConsoleLogger.info(
-        'Repositório ${package.repositoryName} já existe, pulando clone',
+        'Repository ${package.repositoryName} already exists, skipping clone',
       );
       return true;
     }
 
-    // Cria o diretório packages se não existir
     final packagesDirectory = Directory(packagesDir);
     if (!packagesDirectory.existsSync()) {
       packagesDirectory.createSync(recursive: true);
     }
 
-    ConsoleLogger.info('Clonando ${package.repositoryName}...');
-
-    // Tenta primeiro via SSH
+    ConsoleLogger.info('Cloning ${package.repositoryName}...');
     if (await _tryClone(package.sshUrl, package.ref, repoDir.path)) {
-      ConsoleLogger.success('${package.repositoryName} clonado via SSH');
+      ConsoleLogger.success('${package.repositoryName} cloned via SSH');
       return true;
     }
 
-    ConsoleLogger.info('SSH falhou, tentando HTTPS...');
-
-    // Tenta via HTTPS
+    ConsoleLogger.info('SSH failed, trying HTTPS...');
     if (await _tryClone(package.url, package.ref, repoDir.path)) {
-      ConsoleLogger.success('${package.repositoryName} clonado via HTTPS');
+      ConsoleLogger.success('${package.repositoryName} cloned via HTTPS');
       return true;
     }
 
     return false;
   }
 
-  /// Remove um repositório clonado
+  /// Removes a cloned repository
   Future<bool> removeRepository(GitPackage package) async {
     final repoDir = Directory('$packagesDir/${package.repositoryName}');
 
-    if (!repoDir.existsSync()) {
-      return true; // Já removido
-    }
+    if (!repoDir.existsSync()) return true;
 
     try {
-      ConsoleLogger.info('Removendo ${package.repositoryName}...');
+      ConsoleLogger.info('Removing ${package.repositoryName}...');
       repoDir.deleteSync(recursive: true);
-      ConsoleLogger.success('${package.repositoryName} removido');
+      ConsoleLogger.success('${package.repositoryName} removed');
       return true;
     } catch (e) {
-      ConsoleLogger.error('Falha ao remover ${package.repositoryName}: $e');
+      ConsoleLogger.error('Failed to remove ${package.repositoryName}: $e');
     }
   }
 
-  /// Atualiza um repositório clonado (git pull)
+  /// Updates a cloned repository (git pull)
   Future<bool> updateRepository(GitPackage package) async {
     final repoDir = Directory('$packagesDir/${package.repositoryName}');
 
     if (!repoDir.existsSync()) {
-      ConsoleLogger.error('Repositório ${package.repositoryName} não existe');
+      ConsoleLogger.error(
+        'Repository ${package.repositoryName} does not exist',
+      );
     }
 
     try {
-      ConsoleLogger.info('Atualizando ${package.repositoryName}...');
-
-      // Executa git pull no diretório do repositório
+      ConsoleLogger.info('Updating ${package.repositoryName}...');
       final result = await _processManager.run([
         'git',
         'pull',
       ], workingDirectory: repoDir.path);
 
       if (result.exitCode == 0) {
-        ConsoleLogger.success('${package.repositoryName} atualizado');
+        ConsoleLogger.success('${package.repositoryName} updated');
         return true;
       }
-      ConsoleLogger.error('Falha ao atualizar ${package.repositoryName}');
+      ConsoleLogger.error('Failed to update ${package.repositoryName}');
     } catch (e) {
-      ConsoleLogger.error('Erro ao atualizar ${package.repositoryName}: $e');
+      ConsoleLogger.error('Error updating ${package.repositoryName}: $e');
     }
   }
 
-  /// Clona um repositório em um caminho customizado
+  /// Clones a repository to a custom path
   Future<bool> cloneRepositoryToPath(
     GitPackage package,
     String customPath,
@@ -105,72 +98,65 @@ class GitManager {
 
     if (repoDir.existsSync()) {
       ConsoleLogger.info(
-        'Repositório ${package.repositoryName} já existe em $customPath, pulando clone',
+        'Repository ${package.repositoryName} already exists at $customPath, skipping clone',
       );
       return true;
     }
 
-    // Cria o diretório customizado se não existir
     final customDirectory = Directory(customPath);
     if (!customDirectory.existsSync()) {
       customDirectory.createSync(recursive: true);
     }
 
-    ConsoleLogger.info('Clonando ${package.repositoryName} em $customPath...');
-
-    // Tenta primeiro via SSH
+    ConsoleLogger.info('Cloning ${package.repositoryName} to $customPath...');
     if (await _tryClone(package.sshUrl, package.ref, repoDir.path)) {
       ConsoleLogger.success(
-        '${package.repositoryName} clonado via SSH em $customPath',
+        '${package.repositoryName} cloned via SSH to $customPath',
       );
       return true;
     }
 
-    ConsoleLogger.info('SSH falhou, tentando HTTPS...');
-
-    // Tenta via HTTPS
+    ConsoleLogger.info('SSH failed, trying HTTPS...');
     if (await _tryClone(package.url, package.ref, repoDir.path)) {
       ConsoleLogger.success(
-        '${package.repositoryName} clonado via HTTPS em $customPath',
+        '${package.repositoryName} cloned via HTTPS to $customPath',
       );
       return true;
     }
 
     ConsoleLogger.error(
-      'Falha ao clonar ${package.repositoryName} em $customPath',
+      'Failed to clone ${package.repositoryName} to $customPath',
     );
   }
 
-  /// Remove um repositório de um caminho customizado
+  /// Removes a repository from a custom path
   Future<bool> removeRepositoryFromPath(
     GitPackage package,
     String customPath,
   ) async {
     final repoDir = Directory('$customPath/${package.repositoryName}');
 
-    if (!repoDir.existsSync()) {
-      return true; // Já removido
-    }
+    if (!repoDir.existsSync()) return true;
 
     try {
       ConsoleLogger.info(
-        'Removendo ${package.repositoryName} de $customPath...',
+        'Removing ${package.repositoryName} from $customPath...',
       );
       repoDir.deleteSync(recursive: true);
       ConsoleLogger.success(
-        '${package.repositoryName} removido de $customPath',
+        '${package.repositoryName} removed from $customPath',
       );
       return true;
     } catch (e) {
       ConsoleLogger.error(
-        'Falha ao remover ${package.repositoryName} de $customPath: $e',
+        'Failed to remove ${package.repositoryName} from $customPath: $e',
       );
     }
   }
 
+  /// Tries to clone a repository
   Future<bool> _tryClone(String url, String ref, String targetPath) async {
     try {
-      // Clone com branch/tag específica
       final result = await _processManager.run([
         'git',
         'clone',
@@ -180,14 +166,13 @@ class GitManager {
         url,
         targetPath,
       ]);
-
       return result.exitCode == 0;
     } catch (e) {
       return false;
     }
   }
 
-  /// Verifica se o Git está disponível no sistema
+  /// Checks if Git is available on the system
   Future<bool> isGitAvailable() async {
     try {
       final result = await _processManager.run(['git', '--version']);
@@ -197,14 +182,14 @@ class GitManager {
     }
   }
 
-  /// Limpa o diretório packages se estiver vazio
+  /// Cleans up packages directory if empty
   void cleanupPackagesDir() {
     final dir = Directory(packagesDir);
     if (dir.existsSync()) {
       final contents = dir.listSync();
       if (contents.isEmpty) {
         dir.deleteSync();
-        ConsoleLogger.info('Diretório packages removido (estava vazio)');
+        ConsoleLogger.info('Packages directory removed (was empty)');
       }
     }
   }
