@@ -1,10 +1,10 @@
 #!/usr/bin/env dart
 
 import 'package:args/args.dart';
-import 'package:syncpack/src/console/console_logger.dart';
-import 'package:syncpack/syncpack.dart';
+import 'package:dmu/dmu.dart';
+import 'package:dmu/src/console/console_logger.dart';
 
-/// Syncpack entry point
+/// dmu entry point
 ///
 /// Manages Git dependencies as local packages in Dart/Flutter projects.
 /// Allows cloning repositories locally and automatically configuring dependency_overrides
@@ -50,12 +50,20 @@ void main(List<String> arguments) async {
     negatable: false,
   );
 
-  parser.commands['clean']!.addFlag(
-    'help',
-    abbr: 'h',
-    help: 'Shows help for the clean command',
-    negatable: false,
-  );
+  parser.commands['clean']!
+    ..addFlag(
+      'deep',
+      abbr: 'd',
+      help:
+          'Recursively cleans dependencies of all dart packages within the project',
+      negatable: false,
+    )
+    ..addFlag(
+      'help',
+      abbr: 'h',
+      help: 'Shows help for the clean command',
+      negatable: false,
+    );
 
   try {
     final results = parser.parse(arguments);
@@ -65,7 +73,7 @@ void main(List<String> arguments) async {
       return;
     }
 
-    final syncpack = Syncpack.forCurrentDirectory();
+    final dmu = DartMultiRepoUtility.forCurrentDirectory();
     final command = results.command;
 
     if (command == null) {
@@ -85,7 +93,7 @@ void main(List<String> arguments) async {
             'Package name is required for the add command.',
           );
         }
-        await syncpack.add(command.rest.first);
+        await dmu.add(command.rest.first);
         break;
 
       case 'remove':
@@ -93,13 +101,14 @@ void main(List<String> arguments) async {
           _showRemoveHelp();
           return;
         }
+
         if (command.rest.isEmpty) {
           ConsoleLogger.error(
             'Package name is required for the remove command.',
           );
         }
         final packageName = command.rest.first;
-        await syncpack.remove(packageName);
+        await dmu.remove(packageName);
         break;
 
       case 'pub-get':
@@ -107,7 +116,7 @@ void main(List<String> arguments) async {
           _showGetHelp();
           return;
         }
-        await syncpack.pubGet();
+        await dmu.pubGet();
         break;
 
       case 'clean':
@@ -115,7 +124,8 @@ void main(List<String> arguments) async {
           _showCleanHelp();
           return;
         }
-        await syncpack.clean();
+        final deep = command['deep'] as bool;
+        await dmu.clean(deep: deep);
         break;
 
       default:
@@ -132,7 +142,7 @@ void main(List<String> arguments) async {
 
 void _showHelp(ArgParser parser) {
   print(
-    'Syncpack - Git dependency manager for Dart/Flutter projects\n',
+    'dmu - Dart Multi-Repo Utility\n',
   );
   print('Usage: syncpack <command> [options]\n');
   print('Available commands:');
@@ -152,13 +162,13 @@ void _showHelp(ArgParser parser) {
   print('\nGlobal options:');
   print(parser.usage);
   print(
-    '\nUse "syncpack <command> --help" for more information about a specific command.',
+    '\nUse "dmu <command> --help" for more information about a specific command.',
   );
 }
 
 void _showAddHelp() {
   print('Adds a package to dependency_override and clones locally\n');
-  print('Usage: syncpack add <package-name> [options]\n');
+  print('Usage: dmu add <package-name> [options]\n');
   print('Options:');
   print('  --path <path>     Relative path where to clone (default: package)');
   print('  -h, --help        Shows this help\n');
@@ -169,7 +179,7 @@ void _showAddHelp() {
 
 void _showRemoveHelp() {
   print('Removes a package from dependency_override and local folder\n');
-  print('Usage: syncpack remove <package-name> [options]\n');
+  print('Usage: dmu remove <package-name> [options]\n');
   print('Options:');
   print('  -h, --help  Shows this help\n');
   print('Checks if the package is being used before removing.');
@@ -177,7 +187,7 @@ void _showRemoveHelp() {
 
 void _showGetHelp() {
   print('Runs flutter clean and pub get on all dependency_overrides\n');
-  print('Usage: syncpack get [options]\n');
+  print('Usage: dmu get [options]\n');
   print('Options:');
   print('  -h, --help  Shows this help\n');
   print('Downloads dependencies of all dart packages within the project');
@@ -185,8 +195,11 @@ void _showGetHelp() {
 
 void _showCleanHelp() {
   print('Completely cleans project dependencies\n');
-  print('Usage: syncpack clean [options]\n');
+  print('Usage: dmu clean [options]\n');
   print('Options:');
+  print(
+    '  -d, --deep  Recursively cleans dependencies of all dart packages within the project',
+  );
   print('  -h, --help  Shows this help\n');
   print('Cleans dependencies of all dart packages within the project');
 }

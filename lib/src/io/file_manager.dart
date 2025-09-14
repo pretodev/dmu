@@ -1,7 +1,6 @@
 import 'dart:io';
 
-import 'package:syncpack/src/console/console_confirm.dart';
-
+import '../console/console_confirm.dart';
 import '../console/console_logger.dart';
 
 /// Manager for the folder where repositories will be cloned

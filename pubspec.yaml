@@ -1,5 +1,5 @@
-name: syncpack
-description: A sample command-line application.
+name: dmu
+description: Dart Multi-Repo Utility
 version: 1.0.0
 # repository: https://github.com/my_org/my_repo
 

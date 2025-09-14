@@ -1,16 +1,16 @@
 import 'dart:io';
 
 import 'package:process/process.dart';
-import 'package:syncpack/src/io/file_remover.dart';
-import 'package:syncpack/src/io/file_searcher.dart';
 
 import 'src/console/console_logger.dart';
 import 'src/git/git_manager.dart';
 import 'src/git/git_package.dart';
 import 'src/io/file_manager.dart';
+import 'src/io/file_remover.dart';
+import 'src/io/file_searcher.dart';
 import 'src/io/pubspec_parser.dart';
 
-class Syncpack {
+class DartMultiRepoUtility {
   final String projectRoot;
   final String packagesDir;
   final PubspecParser _pubspecParser;
@@ -19,7 +19,7 @@ class Syncpack {
   final FileSearcher _fileSearcher;
   final FileRemover _fileRemover;
 
-  Syncpack._(
+  DartMultiRepoUtility._(
     this.projectRoot,
     this.packagesDir,
     this._pubspecParser,
@@ -29,14 +29,14 @@ class Syncpack {
     this._fileRemover,
   );
 
-  factory Syncpack.forDirectory(
+  factory DartMultiRepoUtility.forDirectory(
     String projectRoot, {
     String packagesSubdir = 'packages',
   }) {
     final packagesDir = '$projectRoot/$packagesSubdir';
     final pubspecPath = '$projectRoot/pubspec.yaml';
 
-    return Syncpack._(
+    return DartMultiRepoUtility._(
       projectRoot,
       packagesDir,
       PubspecParser(pubspecPath: pubspecPath),
@@ -47,9 +47,14 @@ class Syncpack {
     );
   }
 
-  factory Syncpack.forCurrentDirectory({String packagesSubdir = 'packages'}) {
+  factory DartMultiRepoUtility.forCurrentDirectory({
+    String packagesSubdir = 'packages',
+  }) {
     final currentDir = Directory.current.path;
-    return Syncpack.forDirectory(currentDir, packagesSubdir: packagesSubdir);
+    return DartMultiRepoUtility.forDirectory(
+      currentDir,
+      packagesSubdir: packagesSubdir,
+    );
   }
 
   /// Adds a package to dependency_override and clones locally

@@ -5,38 +5,38 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "syncpack-add",
+      "name": "dmu-add",
       "request": "launch",
       "type": "dart",
-      "program": "bin/syncpack_debug.dart",
+      "program": "bin/dmu_debug.dart",
       "args": ["add", "./resources"]
     },
     {
-      "name": "syncpack-remove",
+      "name": "dmu-remove",
       "request": "launch",
       "type": "dart",
-      "program": "bin/syncpack_debug.dart",
+      "program": "bin/dmu_debug.dart",
       "args": ["remove", "./resources"]
     },
     {
-      "name": "syncpack-pub-get",
+      "name": "dmu-pub-get",
       "request": "launch",
       "type": "dart",
-      "program": "bin/syncpack_debug.dart",
+      "program": "bin/dmu_debug.dart",
       "args": ["pub-get", "./resources"]
     },
     {
-      "name": "syncpack-clean",
+      "name": "dmu-clean",
       "request": "launch",
       "type": "dart",
-      "program": "bin/syncpack_debug.dart",
+      "program": "bin/dmu_debug.dart",
       "args": ["clean", "./resources"]
     },
     {
-      "name": "syncpack-deep-clean",
+      "name": "dmu-deep-clean",
       "request": "launch",
       "type": "dart",
-      "program": "bin/syncpack_debug.dart",
+      "program": "bin/dmu_debug.dart",
       "args": ["deep-clean", "./resources"]
     }
   ]

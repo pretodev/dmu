@@ -1,4 +1,4 @@
-# Build configuration for syncpack
+# Build configuration for dmu
 targets:
   $default:
     builders:
