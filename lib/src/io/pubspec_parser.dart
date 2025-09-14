@@ -199,14 +199,7 @@ class PubspecParser {
       _removeSinglePackageFromOverrides(package.name);
     }
 
-    int? insertIndex = _findDependencyOverridesInsertIndex();
-    if (insertIndex == null) {
-      if (_lines.isNotEmpty && _lines.last.trim().isNotEmpty) {
-        _lines.add('');
-      }
-      _lines.add('dependency_overrides:');
-      insertIndex = _lines.length;
-    }
+    final insertIndex = _getDependencyOverridesIndex();
 
     final relativePath = package.getRelativePath();
     _lines.insert(insertIndex, '  ${package.name}:');
@@ -221,6 +214,22 @@ class PubspecParser {
     _removeSinglePackageFromOverrides(packageName);
     _writePubspec();
     ConsoleLogger.info('Removido $packageName do dependency_overrides');
+  }
+
+  int _getDependencyOverridesIndex() {
+    int? insertIndex = _findDependencyOverridesInsertIndex();
+    if (insertIndex != null) {
+      return insertIndex;
+    }
+    final commentIndex = _uncommentDependencyOverrides();
+    if (commentIndex != null) {
+      return commentIndex + 1;
+    }
+    if (_lines.isNotEmpty && _lines.last.trim().isNotEmpty) {
+      _lines.add('');
+    }
+    _lines.add('dependency_overrides:');
+    return _lines.length;
   }
 
   /// Remove um único pacote do dependency_overrides sem escrever o arquivo
@@ -293,6 +302,15 @@ class PubspecParser {
       }
     }
     return null;
+  }
+
+  int? _uncommentDependencyOverrides() {
+    final index = _lines.indexWhere(
+      (element) => element.contains('dependency_overrides:'),
+    );
+    if (index == -1) return null;
+    _lines[index] = 'dependency_overrides:';
+    return index;
   }
 
   void _removeEmptyDependencyOverridesBlock() {
