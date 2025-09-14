@@ -31,6 +31,13 @@
       "type": "dart",
       "program": "bin/syncpack_debug.dart",
       "args": ["clean", "./resources"]
+    },
+    {
+      "name": "syncpack-deep-clean",
+      "request": "launch",
+      "type": "dart",
+      "program": "bin/syncpack_debug.dart",
+      "args": ["deep-clean", "./resources"]
     }
   ]
 }

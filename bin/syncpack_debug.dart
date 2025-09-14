@@ -18,4 +18,8 @@ void main(List<String> args) {
   if (args.first == "clean") {
     syncpack.clean();
   }
+
+  if (args.first == "deep-clean") {
+    syncpack.clean(deep: true);
+  }
 }

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:process/process.dart';
+import 'package:syncpack/src/io/file_remover.dart';
 import 'package:syncpack/src/io/file_searcher.dart';
 
 import 'src/console/console_logger.dart';
@@ -16,6 +17,7 @@ class Syncpack {
   final GitManager _gitManager;
   final FileManager _fileManager;
   final FileSearcher _fileSearcher;
+  final FileRemover _fileRemover;
 
   Syncpack._(
     this.projectRoot,
@@ -24,6 +26,7 @@ class Syncpack {
     this._gitManager,
     this._fileManager,
     this._fileSearcher,
+    this._fileRemover,
   );
 
   factory Syncpack.forDirectory(
@@ -40,6 +43,7 @@ class Syncpack {
       GitManager(packagesDir: packagesDir),
       FileManager(projectRoot: projectRoot),
       FileSearcher(projectRoot: projectRoot),
+      FileRemover(projectRoot: projectRoot),
     );
   }
 
@@ -253,7 +257,7 @@ class Syncpack {
   }
 
   /// Limpa completamente as dependências do projeto
-  Future<void> clean() async {
+  Future<void> clean({bool deep = false}) async {
     try {
       final isFdAvailable = await _fileSearcher.isFdAvailable();
       if (!isFdAvailable) {
@@ -263,6 +267,13 @@ class Syncpack {
       final projects = await _fileSearcher.availablesDartProjects();
       if (projects.isEmpty) {
         return;
+      }
+
+      if (deep) {
+        final lockFiles = projects
+            .map((path) => '${path}pubspec.lock')
+            .toList();
+        await _fileRemover.remove(lockFiles);
       }
 
       final processManager = const LocalProcessManager();
