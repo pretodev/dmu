@@ -1,0 +1,32 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.1.0] - 2025-10-31
+
+### Added
+- Initial release of DMU (Dart Multi-Repo Utility)
+- `add` command to clone Git dependencies locally and configure dependency overrides
+- `remove` command to remove local package overrides and delete cloned directories
+- `pub-get` command to run pub get on all packages in the workspace
+- `clean` command to clean build artifacts from all packages
+- `--deep` flag for clean command to also remove pubspec.lock files
+- Automatic FVM detection and usage when `.fvmrc` file is present
+- Automatic `.gitignore` management for packages directory
+- Interactive confirmation prompts for destructive operations
+- Comprehensive error handling and user-friendly messages
+- Support for custom package directories via `--path` option
+- Multi-package workspace support
+
+### Features
+- Git repository cloning and management
+- Automatic dependency override configuration in pubspec.yaml
+- Workspace-wide pub get execution
+- Build artifact cleaning across all packages
+- FVM compatibility for Flutter projects
+- Safe file operations with user confirmations
+
+[0.1.0]: https://github.com/pretodev/dmu/releases/tag/v0.1.0
