@@ -61,15 +61,12 @@ class DartMultiRepoUtility {
   Future<void> add(String packageName) async {
     try {
       if (!await _gitManager.isGitAvailable()) {
-        ConsoleLogger.error(
-          'Git is not installed or not available in PATH',
-        );
+        ConsoleLogger.error('Git is not installed or not available in PATH');
       }
 
       final gitPackages = _pubspecParser.parseGitDependencies();
-      final package = gitPackages
-          .where((p) => p.name == packageName)
-          .firstOrNull;
+      final package =
+          gitPackages.where((p) => p.name == packageName).firstOrNull;
 
       if (package == null) {
         ConsoleLogger.error(
@@ -107,9 +104,8 @@ class DartMultiRepoUtility {
       }
 
       final gitPackages = _pubspecParser.parseGitDependencies();
-      final package = gitPackages
-          .where((p) => p.name == packageName)
-          .firstOrNull;
+      final package =
+          gitPackages.where((p) => p.name == packageName).firstOrNull;
 
       if (package == null) {
         ConsoleLogger.error(
@@ -275,9 +271,8 @@ class DartMultiRepoUtility {
       }
 
       if (deep) {
-        final lockFiles = projects
-            .map((path) => '${path}pubspec.lock')
-            .toList();
+        final lockFiles =
+            projects.map((path) => '${path}pubspec.lock').toList();
         await _fileRemover.remove(lockFiles);
       }
 
@@ -302,5 +297,16 @@ class DartMultiRepoUtility {
     } catch (e) {
       ConsoleLogger.error('Error executing clean command: $e');
     }
+  }
+
+  /// Returns a list of package names that can be added (Git dependencies not yet in overrides)
+  List<String> getAvailablePackages() {
+    final gitPackages = _pubspecParser.parseGitDependencies();
+    final existingOverrides = _pubspecParser.parseExistingOverrides();
+
+    return gitPackages
+        .where((package) => !existingOverrides.contains(package.name))
+        .map((package) => package.name)
+        .toList();
   }
 }

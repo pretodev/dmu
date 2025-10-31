@@ -29,6 +29,90 @@ Make sure to add the pub cache bin directory to your PATH:
 export PATH="$PATH:$HOME/.pub-cache/bin"
 ```
 
+### Shell Completion (Optional)
+
+DMU supports tab-completion for package names in both zsh and bash.
+
+#### Quick Install (Recommended)
+
+If you have the repository cloned:
+
+```bash
+cd /path/to/dmu/completions
+./install-completions.sh
+```
+
+The script will automatically detect your shell and configure completions.
+
+#### Manual Setup
+
+<details>
+<summary>Click to expand manual installation instructions</summary>
+
+##### Zsh Setup
+
+1. **Install the completion script:**
+
+```bash
+# Create completions directory if it doesn't exist
+mkdir -p ~/.zsh/completions
+
+# Copy the completion script
+curl -o ~/.zsh/completions/_dmu https://raw.githubusercontent.com/pretodev/dmu/main/completions/_dmu
+
+# Or if you have the repo cloned:
+cp /path/to/dmu/completions/_dmu ~/.zsh/completions/
+```
+
+2. **Add completions directory to fpath in your ~/.zshrc:**
+
+```bash
+# Add this to your ~/.zshrc before compinit
+fpath=(~/.zsh/completions $fpath)
+```
+
+3. **Reload your shell configuration:**
+
+```bash
+# Remove cached completions and reload
+rm -f ~/.zcompdump
+exec zsh
+```
+
+##### Bash Setup
+
+1. **Install the completion script:**
+
+```bash
+# Download the completion script
+curl -o ~/.dmu-completion.bash https://raw.githubusercontent.com/pretodev/dmu/main/completions/dmu-completion.bash
+
+# Or if you have the repo cloned:
+cp /path/to/dmu/completions/dmu-completion.bash ~/.dmu-completion.bash
+```
+
+2. **Add to your ~/.bashrc:**
+
+```bash
+# Add this to your ~/.bashrc
+source ~/.dmu-completion.bash
+```
+
+3. **Reload your shell configuration:**
+
+```bash
+source ~/.bashrc
+```
+
+</details>
+
+#### Using Tab-Completion
+
+Now you can use tab-completion:
+- `dmu add <TAB>` - Lists all Git dependencies that can be added
+- `dmu remove <TAB>` - Lists all packages currently in dependency_overrides
+- `dmu add my_pack<TAB>` - Auto-completes package names starting with "my_pack"
+
 ## 🎯 Usage
 
 ### Add a Package

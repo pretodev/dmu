@@ -1,0 +1,95 @@
+#compdef dmu
+
+# Zsh completion script for dmu (Dart Multi-Repo Utility)
+# 
+# Installation:
+#   1. Copy this file to a directory in your $fpath (e.g., /usr/local/share/zsh/site-functions/)
+#   2. Or add the completions directory to your $fpath in ~/.zshrc:
+#      fpath=(path/to/dmu/completions $fpath)
+#   3. Reload completions: rm -f ~/.zcompdump; compinit
+
+_dmu() {
+  local line state
+
+  _arguments -C \
+    '1: :->command' \
+    '*::arg:->args'
+
+  case $state in
+    command)
+      local -a commands
+      commands=(
+        'add:Clone a Git dependency locally and override it'
+        'remove:Remove local override and delete cloned package'
+        'pub-get:Run pub get on all Dart/Flutter packages in project'
+        'clean:Clean build artifacts from all packages'
+        'completions:List available packages for shell completion'
+      )
+      _describe 'command' commands
+      ;;
+
+    args)
+      case $line[1] in
+        add)
+          _dmu_add
+          ;;
+        remove)
+          _dmu_remove
+          ;;
+        clean)
+          _dmu_clean
+          ;;
+        pub-get|completions)
+          _dmu_help_only
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_dmu_add() {
+  _arguments \
+    '--path[Relative path where the package will be cloned]:path:_files -/' \
+    '(-h --help)'{-h,--help}'[Show help for the add command]' \
+    '1:package:_dmu_available_packages'
+}
+
+_dmu_remove() {
+  _arguments \
+    '(-h --help)'{-h,--help}'[Show help for the remove command]' \
+    '1:package:_dmu_overridden_packages'
+}
+
+_dmu_clean() {
+  _arguments \
+    '(-d --deep)'{-d,--deep}'[Deep clean: also removes pubspec.lock files]' \
+    '(-h --help)'{-h,--help}'[Show help for the clean command]'
+}
+
+_dmu_help_only() {
+  _arguments \
+    '(-h --help)'{-h,--help}'[Show help for this command]'
+}
+
+# Get list of packages that can be added (from dmu completions)
+_dmu_available_packages() {
+  local -a packages
+  packages=(${(f)"$(dmu completions 2>/dev/null)"})
+  _describe 'available packages' packages
+}
+
+# Get list of packages that are currently overridden (can be removed)
+# This extracts packages from dependency_overrides in pubspec.yaml
+_dmu_overridden_packages() {
+  local -a packages
+  local pubspec="pubspec.yaml"
+  
+  if [[ -f "$pubspec" ]]; then
+    # Extract package names from dependency_overrides section
+    packages=(${(f)"$(awk '/^dependency_overrides:/,/^[^ ]/ {if ($0 ~ /^  [a-z]/ && $0 !~ /dependency_overrides/) print $1}' "$pubspec" | sed 's/://g')"})
+  fi
+  
+  _describe 'overridden packages' packages
+}
+
+_dmu "$@"

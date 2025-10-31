@@ -16,6 +16,7 @@ void main(List<String> arguments) async {
         ..addCommand('remove')
         ..addCommand('pub-get')
         ..addCommand('clean')
+        ..addCommand('completions')
         ..addFlag(
           'help',
           abbr: 'h',
@@ -71,6 +72,13 @@ void main(List<String> arguments) async {
       help: 'Shows help for the clean command',
       negatable: false,
     );
+
+  parser.commands['completions']!.addFlag(
+    'help',
+    abbr: 'h',
+    help: 'Shows help for the completions command',
+    negatable: false,
+  );
 
   try {
     final results = parser.parse(arguments);
@@ -145,6 +153,17 @@ void main(List<String> arguments) async {
         await dmu.clean(deep: deep);
         break;
 
+      case 'completions':
+        if (command['help'] as bool) {
+          _showCompletionsHelp();
+          return;
+        }
+        final packages = dmu.getAvailablePackages();
+        for (final package in packages) {
+          print(package);
+        }
+        break;
+
       default:
         ConsoleLogger.error(
           'Unknown command: "${command.name}"\n'
@@ -181,6 +200,7 @@ void _showHelp(ArgParser parser) {
     '  pub-get             Run pub get on all Dart/Flutter packages in project',
   );
   print('  clean               Clean build artifacts from all packages');
+  print('  completions         List available packages for shell completion');
   print('');
   print('GLOBAL OPTIONS:');
   print('  -h, --help          Show this help message');
@@ -345,4 +365,38 @@ void _showCleanHelp() {
   print('  • Free up disk space');
   print('  • Reset dependency state (with --deep)');
   print('  • Prepare for fresh builds');
+}
+
+void _showCompletionsHelp() {
+  print('╔════════════════════════════════════════════════════════════════╗');
+  print('║  DMU COMPLETIONS - List available packages                     ║');
+  print('╚════════════════════════════════════════════════════════════════╝');
+  print('');
+  print('DESCRIPTION:');
+  print('  Lists all Git dependencies that can be added to the project.');
+  print('  This command is primarily used by shell completion scripts.');
+  print('');
+  print('USAGE:');
+  print('  dmu completions [options]');
+  print('');
+  print('OPTIONS:');
+  print('  -h, --help          Show this help message');
+  print('');
+  print('OUTPUT:');
+  print('  One package name per line, representing Git dependencies that');
+  print(
+    '  are defined in pubspec.yaml but not yet added to dependency_overrides.',
+  );
+  print('');
+  print('EXAMPLES:');
+  print('  dmu completions');
+  print('');
+  print('NOTE:');
+  print(
+    '  This command is used internally by shell completion scripts to provide',
+  );
+  print(
+    '  tab-completion for the "dmu add" command. You typically don\'t need to',
+  );
+  print('  run this manually.');
 }
