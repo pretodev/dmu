@@ -10,17 +10,24 @@ import 'package:dmu/src/console/console_logger.dart';
 /// Allows cloning repositories locally and automatically configuring dependency_overrides
 /// in pubspec.yaml.
 void main(List<String> arguments) async {
-  final parser = ArgParser()
-    ..addCommand('add')
-    ..addCommand('remove')
-    ..addCommand('pub-get')
-    ..addCommand('clean')
-    ..addFlag(
-      'help',
-      abbr: 'h',
-      help: 'Shows this help message',
-      negatable: false,
-    );
+  final parser =
+      ArgParser()
+        ..addCommand('add')
+        ..addCommand('remove')
+        ..addCommand('pub-get')
+        ..addCommand('clean')
+        ..addFlag(
+          'help',
+          abbr: 'h',
+          help: 'Shows this help message',
+          negatable: false,
+        )
+        ..addFlag(
+          'version',
+          abbr: 'v',
+          help: 'Shows the version number',
+          negatable: false,
+        );
 
   parser.commands['add']!
     ..addOption(
@@ -68,6 +75,11 @@ void main(List<String> arguments) async {
   try {
     final results = parser.parse(arguments);
 
+    if (results['version'] as bool) {
+      print('dmu version 1.0.0');
+      return;
+    }
+
     if (results['help'] as bool || arguments.isEmpty) {
       _showHelp(parser);
       return;
@@ -78,7 +90,8 @@ void main(List<String> arguments) async {
 
     if (command == null) {
       ConsoleLogger.error(
-        'Command not specified. Use --help to see available commands.',
+        'No command specified.\n'
+        'Run "dmu --help" to see available commands.',
       );
     }
 
@@ -90,7 +103,9 @@ void main(List<String> arguments) async {
         }
         if (command.rest.isEmpty) {
           ConsoleLogger.error(
-            'Package name is required for the add command.',
+            'Missing required argument: <package-name>\n'
+            'Usage: dmu add <package-name> [options]\n'
+            'Run "dmu add --help" for more information.',
           );
         }
         await dmu.add(command.rest.first);
@@ -104,7 +119,9 @@ void main(List<String> arguments) async {
 
         if (command.rest.isEmpty) {
           ConsoleLogger.error(
-            'Package name is required for the remove command.',
+            'Missing required argument: <package-name>\n'
+            'Usage: dmu remove <package-name>\n'
+            'Run "dmu remove --help" for more information.',
           );
         }
         final packageName = command.rest.first;
@@ -129,77 +146,203 @@ void main(List<String> arguments) async {
         break;
 
       default:
-        ConsoleLogger.error('Unknown command: ${command.name}');
+        ConsoleLogger.error(
+          'Unknown command: "${command.name}"\n'
+          'Run "dmu --help" to see available commands.',
+        );
     }
   } catch (e) {
     if (e is FormatException) {
-      ConsoleLogger.error('Argument error: ${e.message}');
+      ConsoleLogger.error(
+        'Invalid arguments: ${e.message}\n'
+        'Run "dmu --help" for usage information.',
+      );
     } else {
-      ConsoleLogger.error('Fatal error: $e');
+      ConsoleLogger.error('Unexpected error: $e');
     }
   }
 }
 
 void _showHelp(ArgParser parser) {
+  print('╔════════════════════════════════════════════════════════════════╗');
+  print('║  DMU - Dart Multi-Repo Utility v1.0.0                          ║');
+  print('║  Manage Git dependencies as local packages                     ║');
+  print('╚════════════════════════════════════════════════════════════════╝');
+  print('');
+  print('USAGE:');
+  print('  dmu <command> [arguments]');
+  print('');
+  print('COMMANDS:');
+  print('  add <package>       Clone a Git dependency locally and override it');
   print(
-    'dmu - Dart Multi-Repo Utility\n',
-  );
-  print('Usage: syncpack <command> [options]\n');
-  print('Available commands:');
-  print(
-    '  add <package-name>     Adds a package to dependency_override and clones locally',
-  );
-  print(
-    '  remove <package-name>  Removes a package from dependency_override and local folder',
-  );
-  print('  update [package-name]  Updates one or all packages');
-  print(
-    '  pub-get              Runs flutter clean and pub get on all dependency_overrides',
+    '  remove <package>    Remove local override and delete cloned package',
   );
   print(
-    '  clean                Cleans dependencies of all dart packages within the project',
+    '  pub-get             Run pub get on all Dart/Flutter packages in project',
   );
-  print('\nGlobal options:');
-  print(parser.usage);
+  print('  clean               Clean build artifacts from all packages');
+  print('');
+  print('GLOBAL OPTIONS:');
+  print('  -h, --help          Show this help message');
+  print('  -v, --version       Show version number');
+  print('');
+  print('EXAMPLES:');
+  print('  dmu add my_package              # Add package to local development');
   print(
-    '\nUse "dmu <command> --help" for more information about a specific command.',
+    '  dmu remove my_package           # Remove package from local development',
   );
+  print('  dmu pub-get                     # Download all dependencies');
+  print(
+    '  dmu clean --deep                # Deep clean with pubspec.lock removal',
+  );
+  print('');
+  print('Run "dmu <command> --help" for more information about a command.');
 }
 
 void _showAddHelp() {
-  print('Adds a package to dependency_override and clones locally\n');
-  print('Usage: dmu add <package-name> [options]\n');
-  print('Options:');
-  print('  --path <path>     Relative path where to clone (default: package)');
-  print('  -h, --help        Shows this help\n');
-  print(
-    'The package must be present in dependencies and be a Git repository.',
-  );
+  print('╔════════════════════════════════════════════════════════════════╗');
+  print('║  DMU ADD - Add Git dependency as local package                 ║');
+  print('╚════════════════════════════════════════════════════════════════╝');
+  print('');
+  print('DESCRIPTION:');
+  print('  Clone a Git-based dependency locally and configure it as a');
+  print('  dependency_override in pubspec.yaml for local development.');
+  print('');
+  print('USAGE:');
+  print('  dmu add <package-name> [options]');
+  print('');
+  print('ARGUMENTS:');
+  print('  <package-name>      Name of the package to add (required)');
+  print('                      Must be listed in dependencies with a Git URL');
+  print('');
+  print('OPTIONS:');
+  print('  --path <directory>  Directory where package will be cloned');
+  print('                      (default: packages)');
+  print('  -h, --help          Show this help message');
+  print('');
+  print('REQUIREMENTS:');
+  print('  • Package must be declared in pubspec.yaml dependencies');
+  print('  • Dependency must use a Git repository URL');
+  print('  • Git must be installed and available in PATH');
+  print('');
+  print('EXAMPLES:');
+  print('  dmu add my_package');
+  print('  dmu add my_package --path libs');
+  print('');
+  print('WHAT IT DOES:');
+  print('  1. Verifies package exists in dependencies as Git repo');
+  print('  2. Clones repository to specified path (default: packages/)');
+  print('  3. Adds dependency_override to pubspec.yaml');
+  print('  4. Runs flutter clean && flutter pub get');
+  print('  5. Updates .gitignore to exclude packages directory');
 }
 
 void _showRemoveHelp() {
-  print('Removes a package from dependency_override and local folder\n');
-  print('Usage: dmu remove <package-name> [options]\n');
-  print('Options:');
-  print('  -h, --help  Shows this help\n');
-  print('Checks if the package is being used before removing.');
+  print('╔════════════════════════════════════════════════════════════════╗');
+  print('║  DMU REMOVE - Remove local package override                    ║');
+  print('╚════════════════════════════════════════════════════════════════╝');
+  print('');
+  print('DESCRIPTION:');
+  print('  Remove a package from dependency_overrides and delete its');
+  print('  local cloned directory, reverting to the remote version.');
+  print('');
+  print('USAGE:');
+  print('  dmu remove <package-name> [options]');
+  print('');
+  print('ARGUMENTS:');
+  print('  <package-name>      Name of the package to remove (required)');
+  print('');
+  print('OPTIONS:');
+  print('  -h, --help          Show this help message');
+  print('');
+  print('EXAMPLES:');
+  print('  dmu remove my_package');
+  print('');
+  print('WHAT IT DOES:');
+  print('  1. Verifies package is in dependency_overrides');
+  print('  2. Removes override from pubspec.yaml');
+  print('  3. Deletes local package directory');
+  print('  4. Runs flutter clean && flutter pub get');
+  print('');
+  print('NOTE:');
+  print('  Uncommitted changes in the local package will be lost!');
+  print('  Make sure to commit or backup any changes before removing.');
 }
 
 void _showGetHelp() {
-  print('Runs flutter clean and pub get on all dependency_overrides\n');
-  print('Usage: dmu get [options]\n');
-  print('Options:');
-  print('  -h, --help  Shows this help\n');
-  print('Downloads dependencies of all dart packages within the project');
+  print('╔════════════════════════════════════════════════════════════════╗');
+  print('║  DMU PUB-GET - Download dependencies for all packages          ║');
+  print('╚════════════════════════════════════════════════════════════════╝');
+  print('');
+  print('DESCRIPTION:');
+  print('  Run pub get on all Dart/Flutter packages found in the project,');
+  print('  including the root project and all local overrides.');
+  print('');
+  print('USAGE:');
+  print('  dmu pub-get [options]');
+  print('');
+  print('OPTIONS:');
+  print('  -h, --help          Show this help message');
+  print('');
+  print('REQUIREMENTS:');
+  print('  • fd command-line tool must be installed');
+  print(
+    '    Install with: brew install fd (macOS) or apt install fd-find (Linux)',
+  );
+  print('');
+  print('EXAMPLES:');
+  print('  dmu pub-get');
+  print('');
+  print('WHAT IT DOES:');
+  print('  1. Searches for all pubspec.yaml files in the project');
+  print('  2. Runs flutter pub get (or dart pub get) on each package');
+  print('  3. Uses fvm flutter if .fvmrc file is detected');
+  print('  4. Reports success/failure for each package');
+  print('');
+  print('NOTE:');
+  print('  This command automatically detects all Dart/Flutter packages');
+  print('  in your workspace and ensures dependencies are up to date.');
 }
 
 void _showCleanHelp() {
-  print('Completely cleans project dependencies\n');
-  print('Usage: dmu clean [options]\n');
-  print('Options:');
+  print('╔════════════════════════════════════════════════════════════════╗');
+  print('║  DMU CLEAN - Clean build artifacts from packages               ║');
+  print('╚════════════════════════════════════════════════════════════════╝');
+  print('');
+  print('DESCRIPTION:');
+  print('  Clean build artifacts and caches from all Dart/Flutter packages');
+  print('  in the project to resolve dependency or build issues.');
+  print('');
+  print('USAGE:');
+  print('  dmu clean [options]');
+  print('');
+  print('OPTIONS:');
+  print('  -d, --deep          Deep clean: also removes pubspec.lock files');
+  print('  -h, --help          Show this help message');
+  print('');
+  print('REQUIREMENTS:');
+  print('  • fd command-line tool must be installed');
   print(
-    '  -d, --deep  Recursively cleans dependencies of all dart packages within the project',
+    '    Install with: brew install fd (macOS) or apt install fd-find (Linux)',
   );
-  print('  -h, --help  Shows this help\n');
-  print('Cleans dependencies of all dart packages within the project');
+  print('');
+  print('EXAMPLES:');
+  print('  dmu clean              # Standard clean');
+  print('  dmu clean --deep       # Deep clean with lock file removal');
+  print('');
+  print('WHAT IT DOES:');
+  print('  Standard clean:');
+  print('    • Runs flutter clean on all packages');
+  print('    • Removes build/, .dart_tool/ directories');
+  print('');
+  print('  Deep clean (--deep):');
+  print('    • Everything from standard clean');
+  print('    • Also removes all pubspec.lock files');
+  print('    • Forces complete dependency resolution on next pub get');
+  print('');
+  print('USE CASES:');
+  print('  • Resolve mysterious build errors');
+  print('  • Free up disk space');
+  print('  • Reset dependency state (with --deep)');
+  print('  • Prepare for fresh builds');
 }
