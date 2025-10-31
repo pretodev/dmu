@@ -10,6 +10,7 @@ build/
 # FVM Version Cache
 .fvm/
 
-./example/packages/
-./example/.dart_tool/
-./example/pubspec.lock
+example/packages/
+example/.dart_tool/
+example/pubspec.lock
+example/.gitignore
