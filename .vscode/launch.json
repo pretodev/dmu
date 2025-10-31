@@ -9,35 +9,35 @@
       "request": "launch",
       "type": "dart",
       "program": "bin/dmu_debug.dart",
-      "args": ["add", "./resources"]
+      "args": ["add", "./example"]
     },
     {
       "name": "dmu-remove",
       "request": "launch",
       "type": "dart",
       "program": "bin/dmu_debug.dart",
-      "args": ["remove", "./resources"]
+      "args": ["remove", "./example"]
     },
     {
       "name": "dmu-pub-get",
       "request": "launch",
       "type": "dart",
       "program": "bin/dmu_debug.dart",
-      "args": ["pub-get", "./resources"]
+      "args": ["pub-get", "./example"]
     },
     {
       "name": "dmu-clean",
       "request": "launch",
       "type": "dart",
       "program": "bin/dmu_debug.dart",
-      "args": ["clean", "./resources"]
+      "args": ["clean", "./example"]
     },
     {
       "name": "dmu-deep-clean",
       "request": "launch",
       "type": "dart",
       "program": "bin/dmu_debug.dart",
-      "args": ["deep-clean", "./resources"]
+      "args": ["deep-clean", "./example"]
     }
   ]
 }
