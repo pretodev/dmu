@@ -1,33 +1,32 @@
 # DMU - Dart Multi-Repo Utility
 
-A command-line tool to manage Git dependencies as local packages in Dart/Flutter projects.
+[![pub package](https://img.shields.io/pub/v/dmu.svg)](https://pub.dev/packages/dmu)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+A powerful command-line tool to streamline local development of Git dependencies in Dart and Flutter projects. DMU makes it easy to clone, manage, and override dependencies for debugging and feature development.
 
 ## 🚀 Features
 
-- **Local Development**: Clone Git dependencies locally for easier debugging and development
-- **Automatic Override**: Automatically configure `dependency_overrides` in pubspec.yaml
-- **Multi-Package Support**: Manage dependencies across multiple packages in your workspace
-- **FVM Compatible**: Automatically detects and uses FVM if `.fvmrc` is present
-- **Clean & Simple**: Intuitive commands with helpful error messages
+- **🔧 Local Development**: Clone Git dependencies locally for easier debugging and development
+- **⚡ Automatic Override**: Automatically configure `dependency_overrides` in pubspec.yaml
+- **📦 Multi-Package Support**: Manage dependencies across multiple packages in your workspace
+- **🎯 FVM Compatible**: Automatically detects and uses FVM if `.fvmrc` is present
+- **✨ Clean & Simple**: Intuitive commands with helpful error messages
+- **🔄 Workspace Management**: Run pub get on all packages in your project with a single command
 
 ## 📦 Installation
 
-### Global Installation
+Install DMU globally using pub:
 
 ```bash
-dart pub global activate --source path .
+dart pub global activate dmu
 ```
 
-Or add to your PATH:
+Make sure to add the pub cache bin directory to your PATH:
 
 ```bash
+# Add this to your ~/.zshrc or ~/.bashrc
 export PATH="$PATH:$HOME/.pub-cache/bin"
-```
-
-### Local Development
-
-```bash
-dart run bin/dmu.dart <command>
 ```
 
 ## 🎯 Usage
@@ -93,6 +92,7 @@ dmu pub-get
 - `fd` command-line tool must be installed
   - macOS: `brew install fd`
   - Linux: `apt install fd-find`
+
 
 **What it does:**
 1. Searches for all pubspec.yaml files in the project
@@ -185,10 +185,28 @@ dmu pub-get --help
 dmu clean --help
 ```
 
-## 📝 License
+## � License
 
-Copyright (c) 2025
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📚 Additional Resources
+
+- [Documentation](https://pub.dev/documentation/dmu/latest/)
+- [Report Issues](https://github.com/pretodev/dmu/issues)
+- [Source Code](https://github.com/pretodev/dmu)
+
+## 💡 Use Cases
+
+### Multi-Package Workspace Development
+Perfect for teams working on multiple interconnected packages where you need to test changes across packages before publishing.
+
+### Package Development & Testing
+Ideal for package authors who need to test their packages in real-world applications before releasing new versions.
+
+### Debugging Dependencies
+Makes it easy to dive into dependency source code, add debug prints, and understand issues without forking repositories.
+

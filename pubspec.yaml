@@ -1,7 +1,12 @@
 name: dmu
-description: Dart Multi-Repo Utility
+description: A command-line tool to manage Git dependencies as local packages in Dart/Flutter projects. Streamline your multi-repo development workflow.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/pretodev/dmu
+issue_tracker: https://github.com/pretodev/dmu/issues
+homepage: https://github.com/pretodev/dmu
+
+executables:
+  dmu:
 
 environment:
   sdk: ^3.9.0
