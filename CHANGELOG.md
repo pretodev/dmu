@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0]
+
+### Added
+- Multi-provider Git URL support with extensible converter system
+- Support for GitHub SSH URL conversion
+- Support for GitLab SSH URL conversion (including self-hosted instances)
+- Support for Bitbucket SSH URL conversion
+- Support for Gitea SSH URL conversion
+- Generic Git URL converter as fallback for unknown providers
+- Comprehensive test suite for URL converters (43 tests)
+- Documentation for Git URL converter system (`lib/src/git/README.md`)
+
+### Changed
+- Refactored URL to SSH conversion from hardcoded Azure DevOps logic to provider-based strategy pattern
+- `GitPackage.sshUrl` now uses `GitUrlConverterFactory` to determine the appropriate converter
+
+### Technical Improvements
+- Implemented Strategy pattern for URL conversion
+- Created `GitUrlConverter` interface for extensibility
+- Added `GitUrlConverterFactory` for automatic provider detection
+- Improved code maintainability by separating provider-specific logic
+- Added ability to register custom converters for proprietary Git hosting solutions
+
 ## [1.0.0]
 
 ### Added
@@ -19,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Help message now includes the `completions` command
 
-## [0.1.0] - 2025-10-31
+## [0.1.0]
 
 ### Added
 - Initial release of DMU (Dart Multi-Repo Utility)

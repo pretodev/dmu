@@ -65,8 +65,9 @@ class DartMultiRepoUtility {
       }
 
       final gitPackages = _pubspecParser.parseGitDependencies();
-      final package =
-          gitPackages.where((p) => p.name == packageName).firstOrNull;
+      final package = gitPackages
+          .where((p) => p.name == packageName)
+          .firstOrNull;
 
       if (package == null) {
         ConsoleLogger.error(
@@ -104,8 +105,9 @@ class DartMultiRepoUtility {
       }
 
       final gitPackages = _pubspecParser.parseGitDependencies();
-      final package =
-          gitPackages.where((p) => p.name == packageName).firstOrNull;
+      final package = gitPackages
+          .where((p) => p.name == packageName)
+          .firstOrNull;
 
       if (package == null) {
         ConsoleLogger.error(
@@ -271,8 +273,9 @@ class DartMultiRepoUtility {
       }
 
       if (deep) {
-        final lockFiles =
-            projects.map((path) => '${path}pubspec.lock').toList();
+        final lockFiles = projects
+            .map((path) => '${path}pubspec.lock')
+            .toList();
         await _fileRemover.remove(lockFiles);
       }
 

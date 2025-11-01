@@ -1,3 +1,5 @@
+import 'git_url_converter.dart';
+
 /// Represents a Git package with its configurations
 class GitPackage {
   final String name;
@@ -30,12 +32,10 @@ class GitPackage {
     return path != null ? '$basePath/$path' : basePath;
   }
 
-  /// Converts HTTPS URL to SSH (specific for Azure DevOps)
+  /// Converts HTTPS URL to SSH using the appropriate converter
   String get sshUrl {
-    return url
-        .replaceAll('https://dev.azure.com/', 'git@ssh.dev.azure.com:v3/')
-        .replaceAll('/_git/', '/')
-        .replaceAll('%20', ' ');
+    final converter = GitUrlConverterFactory.getConverter(url);
+    return converter.toSsh(url);
   }
 
   /// Formats the package name for display (capitalizes words)
@@ -44,9 +44,10 @@ class GitPackage {
         .replaceAll('_', ' ')
         .split(' ')
         .map(
-          (word) => word.isEmpty
-              ? ''
-              : '${word[0].toUpperCase()}${word.substring(1)}',
+          (word) =>
+              word.isEmpty
+                  ? ''
+                  : '${word[0].toUpperCase()}${word.substring(1)}',
         )
         .join(' ');
   }

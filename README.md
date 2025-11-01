@@ -216,6 +216,27 @@ dmu clean --deep       # Deep clean with lock file removal
   - Install on macOS: `brew install fd`
   - Install on Linux: `apt install fd-find`
 
+## 🌐 Supported Git Providers
+
+DMU supports multiple Git hosting providers with automatic SSH URL conversion:
+
+- **GitHub** - `https://github.com/owner/repo.git`
+- **GitLab** - `https://gitlab.com/owner/repo.git` (including self-hosted)
+- **Bitbucket** - `https://bitbucket.org/owner/repo.git`
+- **Azure DevOps** - `https://dev.azure.com/org/project/_git/repo`
+- **Gitea** - `https://gitea.example.com/owner/repo.git`
+- **Generic Git** - Any standard Git hosting provider
+
+### How It Works
+
+When cloning repositories, DMU:
+1. Attempts to clone using SSH (converted from HTTPS URL)
+2. Falls back to HTTPS if SSH fails (e.g., no SSH keys configured)
+
+This ensures maximum compatibility regardless of your Git configuration.
+
+See [lib/src/git/README.md](lib/src/git/README.md) for detailed information about URL conversion and adding custom providers.
+
 ## 🔧 How It Works
 
 DMU simplifies the workflow of developing multiple interconnected Dart/Flutter packages:
